@@ -2,7 +2,7 @@
 
 This is SVF & llvm practice repo. These codes use SVF library. Please refer to below repo.
 
-Link: [SVF](https://github.com/SVF-tools/SVF, "SVF tools")
+Link: [SVF](https://github.com/SVF-tools/SVF)
 
 
 # Usage
