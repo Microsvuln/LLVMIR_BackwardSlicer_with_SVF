@@ -12,5 +12,5 @@ Before build code, you must run "setup.sh" in SVF.
 cd TraceAllComponents
 cmake .
 make
-./bin/traceAllComponents ../testfiles/test.ll ( or your own test.ll or .bc )
+./bin/traceAllComponents ../testfiles/ir/test.ll ( or your own test.ll or .bc )
 ```
