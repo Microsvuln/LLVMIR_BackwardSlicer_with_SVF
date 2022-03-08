@@ -6,11 +6,15 @@ Link: [SVF](https://github.com/SVF-tools/SVF)
 
 
 # Usage
-## Trace All Components
 Before build code, you must run "setup.sh" in SVF.
 ```
-cd TraceAllComponents
-cmake .
+cd SVF_Practice
+mkdir build && cd build
+cmake ..
 make
-./bin/traceAllComponents ../testfiles/ir/test.ll ( or your own test.ll or .bc )
+./bin/TestTool ../testfiles/ir/test.ll ( or your own test.ll or .bc )
 ```
+
+# Result
+Print result of backward slicing each variable.
+
