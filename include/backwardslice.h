@@ -551,14 +551,17 @@ public:
                     Function *callee = dyn_cast<Function>( inst->getOperand( inst->getNumOperands() - 1 ) );
                     Slice *calleeSlice = slice_list_by_func_->at( callee );
 
-                    PrintByValue( callee, calleeSlice->GetReturnValue(), "  | " );
+                    map<Function*, int> *call_count_table = new map<Function*, int>;
+                    call_count_table->emplace( func, 1 );
+
+                    PrintByValue( callee, calleeSlice->GetReturnValue(), "  | ", call_count_table );
                     outs() << "  retval :" << util->inst2str( calleeSlice->GetReturnValue() ) << "\n";
                 }
             }
         }
     }
 
-    void PrintByValue( Function *func, Value *v, const string padding )
+    void PrintByValue( Function *func, Value *v, const string padding, map<Function*, int> *call_count_table )
     {
         assert( func != nullptr && "PrintByValue : Function is nullptr" );
         //assert( v != nullptr && "PrintByValue : Value is nullptr" );
@@ -570,6 +573,17 @@ public:
         if ( v->getValueID() <= Value::InstructionVal ) {
             //outs() << padding << "retval :" << ConstValueToStr( v ) << "\n";
             return;
+        }
+
+        if ( call_count_table->find( func ) != call_count_table->end() ) {
+            (*call_count_table)[func] ++;
+            if ( call_count_table->at( func ) >= 3 ) {
+                outs() << padding << "Called more than 3 times" << "\n";
+                return;
+            }
+        }
+        else {
+            call_count_table->emplace( func, 1 );
         }
 
         Slice *s = slice_list_by_func_->at( func );
@@ -595,7 +609,7 @@ public:
                 Function *callee = dyn_cast<Function>( inst->getOperand( inst->getNumOperands() - 1 ) );
                 Slice *calleeSlice = slice_list_by_func_->at( callee );
 
-                PrintByValue( callee, calleeSlice->GetReturnValue(), padding + "  " );
+                PrintByValue( callee, calleeSlice->GetReturnValue(), "  " + padding , call_count_table );
                 outs() << padding << "retval :" << util->inst2str( calleeSlice->GetReturnValue() ) << "\n";
             }            
         }
