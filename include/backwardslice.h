@@ -185,14 +185,26 @@ public:
 
         resultMap->at( result )->clear();
 
-        BasicBlock* pred = nullptr;
-        for( auto v : tmp ) {
-            Instruction *inst = dyn_cast<Instruction>( v );
-            if ( pred != inst->getParent() ) {
-                AppendInstsByOperand( result, inst->getParent(), util );
+        // A <- B : merge B to A
+        // basicblock <- basicblock, variable <- basicblock
+        // => just merge
+        // variable <- variable, basicblock <- variable
+        // => consider change basicblock
+        if ( operand->getValueID() == Value::BasicBlockVal ) {
+            for( auto v : tmp ) {
+                resultMap->at( result )->push_back( v );
             }
-            resultMap->at( result )->push_back( v );
-            pred = inst->getParent();
+        }
+        else {
+            BasicBlock* pred = nullptr;
+            for( auto v : tmp ) {
+                Instruction *inst = dyn_cast<Instruction>( v );
+                if ( pred != inst->getParent() ) {
+                    AppendInstsByOperand( result, inst->getParent(), util );
+                }
+                resultMap->at( result )->push_back( v );
+                pred = inst->getParent();
+            }
         }
     }
 
@@ -232,8 +244,30 @@ public:
         return true;
     }
 
+    void PrintInstByValue( Value *v, UtilDef *util )
+    {
+        map<Value*, vector<Value*>*> *list;
+        if ( v->getValueID() == Value::BasicBlockVal ) {
+            outs() << "Basicblock" << "\n";
+            list = prev_branch_inst_list_by_block_;
+        }
+        else {
+            outs() << "Value" << "\n";
+            list = sliced_inst_list_;
+        }
+        if ( list->at( v )->empty() ) {
+            outs() << "empty vector\n------" << "\n";
+            return ;
+        }
+        for ( auto it : *( list->at( v ) ) ) {
+            outs() << util->inst2str( it ) << "\n";
+        }
+        outs() << "-------\n";
+
+    }
 
     void SliceInst( Instruction *inst, UtilDef *util ) {
+        // outs() << pasMsg("[DEBUG] ") << pasMsg( util->inst2str( inst ) ) << "\n";
         switch ( inst->getOpcode() ) {
 
         case Instruction::Alloca :
@@ -246,7 +280,7 @@ public:
             GetElementPtrInst *gepinst = dyn_cast<GetElementPtrInst>( inst );
             Value *object = inst->getOperand( 0 );
             if ( gepinst->getResultElementType()->isPointerTy() ) {
-                outs() << pasMsg( "[DEBUG] Append alias!\n" );
+                // outs() << pasMsg( "[DEBUG] Append alias!\n" );
                 AppendAlias( GetPointingValue( object ), inst );
             }
             Value *alias = FindAlias( inst );
@@ -265,12 +299,12 @@ public:
             Value *var = inst->getOperand( 1 );
 
             if ( value->getValueID() == Value::ArgumentVal ) {
-                outs() << pasMsg( "[DEBUG] Argument Value\n" );
+                // outs() << pasMsg( "[DEBUG] Argument Value\n" );
                 AppendInst( value, inst, util );
             }
 
             if ( value->getType()->isPointerTy() ) {
-                outs() << pasMsg( "[DEBUG] Insert Pointer!\n" );
+                // outs() << pasMsg( "[DEBUG] Insert Pointer!\n" );
                 SetPointingValue( var, value );
             }
 
@@ -312,6 +346,11 @@ public:
         case Instruction::Switch :
         {
             Value *value = inst->getOperand( 0 );
+
+            if ( value->getValueID() == Value::BasicBlockVal ) {
+                AppendInst( value, inst, util );
+                break;
+            }
             vector<Value*> labels;
             for ( int i = 1; i < inst->getNumOperands(); i ++ ) {
                 if ( inst->getOperand( i )->getValueID() == Value::BasicBlockVal ) {
@@ -340,7 +379,7 @@ public:
             break;
         }
         */
-        // binary ops
+        // binary operators
         case Instruction::Add  :
         case Instruction::FAdd :
         case Instruction::Sub  :
@@ -353,6 +392,13 @@ public:
         case Instruction::URem :
         case Instruction::SRem :
         case Instruction::FRem :
+        // bitwise operators
+        case Instruction::Shl :
+        case Instruction::LShr :
+        case Instruction::AShr :
+        case Instruction::And :
+        case Instruction::Or :
+        case Instruction::Xor :
         {
             Value *op1 = inst->getOperand( 0 );
             Value *op2 = inst->getOperand( 1 );
@@ -379,7 +425,6 @@ public:
         {
             assert( false && "AtomicCmpXchg" );
             Value *op1 = inst->getOperand( 0 );
-            Value *op2 = inst->getOperand( 1 );
             Value *op3 = inst->getOperand( 2 );
             AppendInstsByOperand( op1, op3, util );
             break;
@@ -439,7 +484,7 @@ public:
         }
         case Instruction::PHI :
         {
-            assert( false && "PHI" );
+            //assert( false && "PHI" );
             AppendInst( inst, inst, util );
             AppendInstsByOperand( inst, inst->getOperand( 0 ), util );
             AppendInstsByOperand( inst, inst->getOperand( 1 ), util );
@@ -491,7 +536,37 @@ public:
             AppendInst( inst, inst, util );
             break;
         }
+        // casting operators
+        case Instruction::Trunc :
+        case Instruction::ZExt :
+        case Instruction::SExt :
+        case Instruction::FPTrunc :
+        case Instruction::FPExt :
+        case Instruction::FPToUI :
+        case Instruction::FPToSI :
+        case Instruction::UIToFP :
+        case Instruction::SIToFP :
+        case Instruction::PtrToInt :
+        case Instruction::IntToPtr :
+        case Instruction::BitCast :
+        case Instruction::AddrSpaceCast :
+        {
+            //assert( false && "PtrToInt" );
+            AppendInst( inst, inst, util );
+            //AppendInstsByOperand( inst, inst->getOperand( 0 ), util );
+            break;
+        }
+
+        // Just Pass
+        case Instruction::Unreachable :
+        {
+            break;
+        }
+
         default:
+            outs() << "assert : " << inst->getOpcodeName() << "\n";
+            outs() << "assert : " << util->inst2str( inst ) << "\n";
+            assert( false && "Not handled instruction" );
             break;
         }
     }
