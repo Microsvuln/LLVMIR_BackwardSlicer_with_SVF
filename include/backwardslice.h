@@ -445,18 +445,30 @@ public:
             Value *operand = inst->getOperand( inst->getNumOperands() - 1 );
             
             if ( operand->getValueID() != Value::FunctionVal ) {
-                //outs() << util->inst2str( operand ) << "\n";
-                calledFunc = dyn_cast<Function>( FindAlias( operand ) );
+                Value *v = FindAlias( operand );
+                if ( v == nullptr ) {
+                    calledFunc = nullptr;
+                }
+                else {
+                    calledFunc = dyn_cast<Function>( v );
+                }
             }
             else {
                 calledFunc = callinst->getCalledFunction();
             }
 
             if ( calledFunc != nullptr ) {
-            assert ( calledFunc->getValueID() == Value::FunctionVal && "Not a Function value" );
-                if ( calledFunc->getName() == "llvm.dbg.declare" ) {
+                assert ( calledFunc->getValueID() == Value::FunctionVal && "Not a Function value" );
+                if ( calledFunc->getName().find( "llvm.dbg" ) != std::string::npos ) {
                     break;
                 }
+                AppendInst( inst, inst, util );
+                for ( int i = 0; i < inst->getNumOperands() - 1; i ++ ) {
+                    AppendInstsByOperand( inst, inst->getOperand( i ), util );
+                }
+            }
+            else {
+                AppendInst( inst, inst, util );
             }
             /*
             for ( auto &bb : *calledFunc ) {
@@ -471,10 +483,7 @@ public:
                 AppendInstsByOperand( arg, inst->getOperand( i ), util );
             }
             */
-            AppendInst( inst, inst, util );
-            for ( int i = 0; i < inst->getNumOperands() - 1; i ++ ) {
-                AppendInstsByOperand( inst, inst->getOperand( i ), util );
-            }
+            
             
             break;
         }
