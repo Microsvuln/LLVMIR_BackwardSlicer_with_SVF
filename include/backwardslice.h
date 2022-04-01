@@ -408,23 +408,26 @@ public:
         case Instruction::Or :
         case Instruction::Xor :
         {
-            Value *op1 = inst->getOperand( 0 );
-            Value *op2 = inst->getOperand( 1 );
             AppendInst( inst, inst, util );
-            AppendInstsByOperand( inst, op1, util );
-            AppendInstsByOperand( inst, op2, util );
+            AppendInstsByOperand( inst, inst->getOperand( 0 ), util );
+            AppendInstsByOperand( inst, inst->getOperand( 1 ), util );
+            break;
+        }
+
+        // Unary operator
+        case Instruction::FNeg:
+        {
+            AppendInst( inst, inst, util );
+            AppendInstsByOperand( inst, inst->getOperand( 0 ), util );
             break;
         }
         
         case Instruction::Select :
         {
-            Value *op1 = inst->getOperand( 0 );
-            Value *op2 = inst->getOperand( 1 );
-            Value *op3 = inst->getOperand( 2 );
             AppendInst( inst, inst, util );
-            AppendInstsByOperand( inst, op1, util );
-            AppendInstsByOperand( inst, op2, util );
-            AppendInstsByOperand( inst, op3, util );
+            AppendInstsByOperand( inst, inst->getOperand( 0 ), util );
+            AppendInstsByOperand( inst, inst->getOperand( 1 ), util );
+            AppendInstsByOperand( inst, inst->getOperand( 2 ), util );
             break;
         }
         
@@ -497,11 +500,9 @@ public:
         case Instruction::ShuffleVector :
         {
             //assert( false && "ShuffleVector" );
-            Value *op1 = inst->getOperand( 0 );
-            Value *op2 = inst->getOperand( 1 );
             AppendInst( inst, inst, util );
-            AppendInstsByOperand( inst, op1, util );
-            AppendInstsByOperand( inst, op2, util );
+            AppendInstsByOperand( inst, inst->getOperand( 0 ), util );
+            AppendInstsByOperand( inst, inst->getOperand( 1 ), util );
             break;
         }
         case Instruction::Ret :
