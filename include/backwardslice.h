@@ -104,11 +104,15 @@ public:
             resultMap = sliced_inst_list_;
         }
         if ( resultMap->find( result ) == resultMap->end() ) {
+            
             if ( result->getValueID() == Value::InstructionVal ) {
                 Instruction *inst = dyn_cast<Instruction>( result );
                 errs() << inst->getParent()->getParent()->getName().str() << " " << result->getValueID() << " " << util->inst2idx( result ) << "\n";
             }
+            errs() << result->getName().str() << " : " << result->getValueID() << "\n";
             assert( resultMap->find( result ) != resultMap->end() && "Not Found result" );
+            //AppendInst( result, operand, util );
+            //return ;
         }
         // assert( sliced_inst_list_->find( operand ) == sliced_inst_list_->end() && "Not Found operand" );
 
@@ -218,17 +222,21 @@ public:
         else {
             target = sliced_inst_list_;
         }
+
+        //assert( key->getValueID() == Value::InstructionVal && "Key is not Inst" );
+        
         if ( target->find( key ) == target->end() ) {
             target->emplace( key, new vector<Value*> );
         }
-        if ( !target->at( key )->empty() ) {
+        
+        if ( !target->at( key )->empty() && key->getValueID() == Value::InstructionVal ) {
             Instruction *i1 = dyn_cast<Instruction>( target->at( key )->back() );
             Instruction *i2 = dyn_cast<Instruction>( v );
             if ( i1->getParent() != i2->getParent() ) {
                 AppendInstsByOperand( key, i2->getParent(), util );
             }
         }
-        else {
+        else if ( v->getValueID() == Value::InstructionVal ) {
             Instruction *inst = dyn_cast<Instruction>( v );
             AppendInstsByOperand( key, inst->getParent(), util );
         }
@@ -407,7 +415,6 @@ public:
             AppendInstsByOperand( inst, op2, util );
             break;
         }
-
         
         case Instruction::Select :
         {
@@ -489,7 +496,7 @@ public:
         }
         case Instruction::ShuffleVector :
         {
-            assert( false && "ShuffleVector" );
+            //assert( false && "ShuffleVector" );
             Value *op1 = inst->getOperand( 0 );
             Value *op2 = inst->getOperand( 1 );
             AppendInst( inst, inst, util );
@@ -514,10 +521,15 @@ public:
         }
         case Instruction::InsertElement :
         {
-            assert( false && "InsertElement" );
-            Value *op1 = inst->getOperand( 0 );
-            Value *op2 = inst->getOperand( 1 );
-            AppendInstsByOperand( op1, op2, util );
+            //assert( false && "InsertElement" );
+            Value *vec = inst->getOperand( 0 );
+            Value *elem = inst->getOperand( 1 );
+
+            // Due to poison
+            AppendInst( inst, inst, util );
+            AppendInst( vec, inst, util );
+            AppendInstsByOperand( vec, elem, util );
+            AppendInstsByOperand( inst, vec, util );
             break;
         }
         case Instruction::InsertValue :
@@ -540,7 +552,7 @@ public:
         }
         case Instruction::ExtractElement :
         {
-            assert( false && "ExtractElement" );
+            //assert( false && "ExtractElement" );
             AppendInst( inst, inst, util );
             AppendInstsByOperand( inst, inst->getOperand( 0 ), util );
             break;
