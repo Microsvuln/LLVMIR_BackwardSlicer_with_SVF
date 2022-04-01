@@ -267,7 +267,7 @@ public:
     }
 
     void SliceInst( Instruction *inst, UtilDef *util ) {
-        // outs() << pasMsg("[DEBUG] ") << pasMsg( util->inst2str( inst ) ) << "\n";
+        outs() << pasMsg("[DEBUG] ") << pasMsg( util->inst2str( inst ) ) << "\n";
         switch ( inst->getOpcode() ) {
 
         case Instruction::Alloca :
@@ -326,7 +326,7 @@ public:
             Value *varPointee = GetPointingValue( var );
 
             if ( varPointee != nullptr ) {
-                outs() << pasMsg( "[DEBUG] Append alias!\n" );
+                //outs() << pasMsg( "[DEBUG] Append alias!\n" );
                 AppendAlias( varPointee, inst );
             }
 
@@ -439,11 +439,24 @@ public:
         }
         case Instruction::Call :
         {
-            //assert( false && "Call" );
+            // assert( false && "Call" );
             CallInst *callinst = dyn_cast<CallInst>( inst );
-            Function *calledFunc = callinst->getCalledFunction();
-            if ( calledFunc->getName() == "llvm.dbg.declare" ) {
-                break;
+            Function *calledFunc = nullptr;
+            Value *operand = inst->getOperand( inst->getNumOperands() - 1 );
+            
+            if ( operand->getValueID() != Value::FunctionVal ) {
+                //outs() << util->inst2str( operand ) << "\n";
+                calledFunc = dyn_cast<Function>( FindAlias( operand ) );
+            }
+            else {
+                calledFunc = callinst->getCalledFunction();
+            }
+
+            if ( calledFunc != nullptr ) {
+            assert ( calledFunc->getValueID() == Value::FunctionVal && "Not a Function value" );
+                if ( calledFunc->getName() == "llvm.dbg.declare" ) {
+                    break;
+                }
             }
             /*
             for ( auto &bb : *calledFunc ) {
@@ -602,6 +615,7 @@ public:
                 outs() << pasMsg( "VAR : " ) << name << "\n";
             }
             else {
+                continue;
                 outs() << pasMsg( "VAR : " ) << util->inst2str( it.first ) << "\n";
             }
 
@@ -623,7 +637,12 @@ public:
                 outs() << util->inst2str( value ) << "\n";
                 
                 if ( inst->getOpcode() == Instruction::Call ) {
-                    Function *callee = dyn_cast<Function>( inst->getOperand( inst->getNumOperands() - 1 ) );
+                    Value *calleePointer = inst->getOperand( inst->getNumOperands() - 1 );
+                    if ( calleePointer->getValueID() != Value::FunctionVal ) {
+                        calleePointer = slice_list_by_func_->at( func )->FindAlias( calleePointer );
+                    }
+                    Function *callee = dyn_cast<Function>( calleePointer );
+                    
                     Slice *calleeSlice = slice_list_by_func_->at( callee );
 
                     map<Function*, int> *call_count_table = new map<Function*, int>;
