@@ -7,7 +7,6 @@ static llvm::cl::opt<std::string> InputFilename( llvm::cl::Positional,
 
 int main( int argc, char *argv[] )
 {
-    UtilDef *util = new UtilDef;
     int arg_num = 0;
     char **arg_value = new char*[argc];
 
@@ -22,18 +21,64 @@ int main( int argc, char *argv[] )
 
     Backward *bw = new Backward;
 
-    PrintAllComponent( svfModule );
+    vector<Function*> functions;
+    vector<bool> isSliced;
 
+    //PrintAllComponent( svfModule );
+
+    int i = 0;
     for ( auto func : *svfModule ) {
+        //outs() << pasMsg("Function : " + func->getName() + "\n" );
         Function *llvmFunc = func->getLLVMFun();
-        bw->SliceFunction( llvmFunc );
+        functions.push_back( llvmFunc );
+        outs() << to_string( i ++ ) << " : " << llvmFunc->getName() << "\n";
     }
+    isSliced.resize( functions.size() );
+    std::fill( isSliced.begin(), isSliced.end(), false );
+
+    while( true ) {
+        int idx;
+        bool done = false;
+        outs() << "select : ";
+        cin >> idx;
+        switch( idx ) {
+        case -1:
+            done = true;
+            break;
+        case -2:
+            outs() << "idx : ";
+            cin >> idx;
+            for ( int i = idx; i < functions.size(); i ++ ) {
+                bw->SliceFunction( functions[i] );
+            }
+            break;
+        default:
+        {
+            Function *func = functions[idx];
+            //PrintByFunction( functions[idx] );
+            if ( !isSliced[idx] ) {
+                bw->SliceFunction( func );
+                isSliced[idx] = true;
+            }
+            bw->PrintValueList( func );
+            cin >> idx;
+            bw->PrintByValueIdx( func, idx );
+            //bw->PrintByFunction( functions[idx] );
+            break;
+        }
+        }
+        if ( done ) {
+            break;
+        }
+    }
+
+/*
     for ( auto func : *svfModule ) {
         Function *llvmFunc = func->getLLVMFun();
         bw->PrintByFunction( llvmFunc );
     }
+*/
     
-    delete util;
     delete bw;
     
     return 0;
