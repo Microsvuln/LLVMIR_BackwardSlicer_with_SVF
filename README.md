@@ -1,6 +1,6 @@
-# SVF_Practice
+# LLVMIR_BackwardSlicer_with_SVF
 
-This is SVF & llvm practice repo. These codes use SVF library. Please refer to below repo.
+This is LLMV IR backward slicer. These codes use SVF library. Please refer to below repo.
 
 Link: [SVF](https://github.com/SVF-tools/SVF)
 
