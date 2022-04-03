@@ -23,6 +23,7 @@ private:
     map <Value*, vector<Value*>*> *prev_branch_inst_list_by_block_;
     map <Value*, Value*> *pointing_value_table_;
     map <Value*, vector<Value*>*> *var_alias_list_;
+    //vector<Value *> *value_list_;
     Value *return_value;
 public:
     Slice()
@@ -275,7 +276,6 @@ public:
     }
 
     void SliceInst( Instruction *inst, UtilDef *util ) {
-        outs() << pasMsg("[DEBUG] ") << pasMsg( util->inst2str( inst ) ) << "\n";
         switch ( inst->getOpcode() ) {
 
         case Instruction::Alloca :
@@ -451,7 +451,7 @@ public:
         {
             // assert( false && "Call" );
             CallInst *callinst = dyn_cast<CallInst>( inst );
-            Function *calledFunc = nullptr;
+            Function *calledFunc = callinst->getCalledFunction();
             Value *operand = inst->getOperand( inst->getNumOperands() - 1 );
             
             if ( operand->getValueID() != Value::FunctionVal ) {
@@ -469,9 +469,6 @@ public:
 
             if ( calledFunc != nullptr ) {
                 assert ( calledFunc->getValueID() == Value::FunctionVal && "Not a Function value" );
-                if ( calledFunc->getName().find( "llvm.dbg" ) != std::string::npos ) {
-                    break;
-                }
                 AppendInst( inst, inst, util );
                 for ( int i = 0; i < inst->getNumOperands() - 1; i ++ ) {
                     AppendInstsByOperand( inst, inst->getOperand( i ), util );
@@ -588,7 +585,7 @@ public:
         {
             //assert( false && "PtrToInt" );
             AppendInst( inst, inst, util );
-            //AppendInstsByOperand( inst, inst->getOperand( 0 ), util );
+            AppendInstsByOperand( inst, inst->getOperand( 0 ), util );
             break;
         }
 
@@ -604,6 +601,39 @@ public:
             assert( false && "Not handled instruction" );
             break;
         }
+    }
+
+    void PrintValueList( UtilDef *util ) const
+    {
+        int i = 0;
+        for ( auto value : *sliced_inst_list_ ) {
+            outs() << i << " : ";
+            if ( value.first->getName().empty() ) {
+                if ( value.first->getValueID() == Value::InstructionVal ) {
+                    outs() << util->inst2str( value.first );
+                }
+                else {
+                    outs() << util->inst2str( value.second->back() );
+                }
+            }
+            else {
+                outs() << value.first->getName();
+            }
+            outs() << "\n";
+            i ++;
+        }
+    }
+
+    Value* GetValueByIndex( int idx ) const
+    {
+        int i = 0;
+        for ( auto value : *sliced_inst_list_ ) {
+            if ( i == idx ) {
+                return value.first;
+            }
+            i ++ ;
+        }
+        assert( false && "out of range" );
     }
 };
 
@@ -622,6 +652,9 @@ public:
         slice_list_by_func_->emplace( func, new Slice() );
         for( auto &bb : *func ) {
             for( auto &inst : bb ) {
+                if ( util->inst2str( &inst ).find( "llvm.dbg." ) != string::npos )
+                    continue;
+                //outs() << pasMsg("[DEBUG] ") << pasMsg( util->inst2str( &inst ) ) << "\n";
                 slice_list_by_func_->at( func )->SliceInst( &inst, util );
             }
         }
@@ -665,13 +698,16 @@ public:
                     }
                     Function *callee = dyn_cast<Function>( calleePointer );
                     
+                    if ( slice_list_by_func_->find( callee ) == slice_list_by_func_->end() ) {
+                        SliceFunction( callee );
+                    }
                     Slice *calleeSlice = slice_list_by_func_->at( callee );
 
                     map<Function*, int> *call_count_table = new map<Function*, int>;
                     call_count_table->emplace( func, 1 );
 
-                    PrintByValue( callee, calleeSlice->GetReturnValue(), "  | ", call_count_table );
-                    outs() << "  retval :" << util->inst2str( calleeSlice->GetReturnValue() ) << "\n";
+                    PrintByValue( callee, calleeSlice->GetReturnValue(), "    |", call_count_table );
+                    //outs() << "  retval :" << util->inst2str( calleeSlice->GetReturnValue() ) << "\n";
                 }
             }
         }
@@ -723,10 +759,13 @@ public:
 
             if ( inst->getOpcode() == Instruction::Call ) {
                 Function *callee = dyn_cast<Function>( inst->getOperand( inst->getNumOperands() - 1 ) );
+                if ( slice_list_by_func_->find( callee ) == slice_list_by_func_->end() ) {
+                    SliceFunction( callee );
+                }
                 Slice *calleeSlice = slice_list_by_func_->at( callee );
 
-                PrintByValue( callee, calleeSlice->GetReturnValue(), "  " + padding , call_count_table );
-                outs() << padding << "retval :" << util->inst2str( calleeSlice->GetReturnValue() ) << "\n";
+                PrintByValue( callee, calleeSlice->GetReturnValue(), "    |" + padding , call_count_table );
+                //outs() << padding << "retval :" << util->inst2str( calleeSlice->GetReturnValue() ) << "\n";
             }            
         }
     }
@@ -752,6 +791,18 @@ public:
             break;
         }
         return result;
+    }
+
+    void PrintValueList( Function *func ) const
+    {
+        slice_list_by_func_->at( func )->PrintValueList( util );
+    }
+
+    void PrintByValueIdx( Function *func, int idx )
+    {
+        map<Function*, int> *call_count_table = new map<Function*, int>;
+        call_count_table->emplace( func, 1 );
+        PrintByValue( func, slice_list_by_func_->at( func )->GetValueByIndex( idx ), "", call_count_table );
     }
 
 };
