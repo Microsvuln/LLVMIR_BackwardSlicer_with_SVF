@@ -254,7 +254,7 @@ public:
         if (!bb) return 0;
 
         for (auto PI = pred_begin((BasicBlock *)bb); PI != pred_end((BasicBlock *)bb); PI++){
-            const BasicBlock *tp = (const BasicBlock *)*PI;
+            //const BasicBlock *tp = (const BasicBlock *)*PI;
             p++;
         }
         return p;
@@ -266,7 +266,7 @@ public:
         if (!bb) return 0;
 
         for (auto SI = succ_begin((BasicBlock *)bb); SI != succ_end((BasicBlock *)bb); SI++){
-            const BasicBlock *tp = (const BasicBlock *)*SI;
+            //const BasicBlock *tp = (const BasicBlock *)*SI;
             s++;
         }
         return s;
@@ -506,7 +506,7 @@ public:
 
     std::string getOperatorTypeName( const Instruction *inst ) {
         std::string result;
-        unsigned int opcode = inst->getOpcode();
+        //unsigned int opcode = inst->getOpcode();
         if ( isTermOp( inst ) ) {
             result = "TermOp";
         }
