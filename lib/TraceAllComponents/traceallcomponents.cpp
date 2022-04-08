@@ -113,6 +113,21 @@ void PrintByFunction( llvm::Function *func )
                     
                 outs() << " : " << operand << "\n";
             }
+            if ( inst->getOpcode() == Instruction::Call ) {
+                outs() << "Param Attr : ";
+                CallInst *ci = dyn_cast<CallInst>( inst );
+                Function *calledFunc = ci->getCalledFunction();
+                for ( int i = 0; i < ci->getNumOperands() - 1; i ++ ) {
+                    //Attribute::hasAttribute(StringRef Kind) 
+                    Attribute attr = calledFunc->getArg( i )->getAttribute(Attribute::AttrKind::Dereferenceable);
+                    auto op = ci->getOperand( i );
+                    op->getType()->print( outs() );
+                    outs() << ":" << attr.getAsString();
+                    
+                    outs() << ", ";
+                }
+                outs() << "\n";
+            }
         }
     }
 }
