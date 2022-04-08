@@ -43,15 +43,26 @@ int main( int argc, char *argv[] )
         cin >> idx;
         switch( idx ) {
         case -1:
+        {
             done = true;
             break;
+        }
         case -2:
+        {
             outs() << "idx : ";
             cin >> idx;
             for ( int i = idx; i < functions.size(); i ++ ) {
                 bw->SliceFunction( functions[i] );
             }
             break;
+        }
+        case -3:
+        {
+            outs() << "idx : ";
+            cin >> idx;
+            PrintByFunction( functions[idx] );
+            break;
+        }
         default:
         {
             Function *func = functions[idx];
