@@ -84,6 +84,7 @@ public:
 
     void AppendAlias( Value *key, Value *v )
     {
+        assert( key != nullptr && "Key is nullptr");
         if ( var_alias_list_->find( key ) == var_alias_list_->end() ) {
             var_alias_list_->emplace( key, new vector<Value*> );
         } 
@@ -280,23 +281,27 @@ public:
 
         case Instruction::Alloca :
         {
-            AppendInst( inst, inst, util );
+            //AppendInst( inst, inst, util );
             break;
         }
         case Instruction::GetElementPtr :
         {
             GetElementPtrInst *gepinst = dyn_cast<GetElementPtrInst>( inst );
             Value *object = inst->getOperand( 0 );
+            /*
             if ( gepinst->getResultElementType()->isPointerTy() ) {
                 // outs() << pasMsg( "[DEBUG] Append alias!\n" );
-                AppendAlias( GetPointingValue( object ), inst );
+                if ( GetPointingValue( object ) != nullptr ) {
+                    AppendAlias( GetPointingValue( object ), inst );
+                }
+                
             }
             Value *alias = FindAlias( inst );
             Value *aliasPointee = GetPointingValue( alias );
             if ( alias != nullptr && aliasPointee != nullptr ) {
                 SetPointingValue( inst, aliasPointee );
             }
-
+            */
             AppendInst( inst, inst, util );
             AppendInstsByOperand( inst, object, util );
             break;
