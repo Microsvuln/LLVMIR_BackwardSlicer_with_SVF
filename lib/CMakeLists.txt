@@ -1,6 +1,8 @@
 add_subdirectory(BackwardSlice)
+add_subdirectory(BackwardSlice_test)
 add_subdirectory(TraceAllComponents)
 add_subdirectory(UtilDef)
 
 add_dependencies(BackwardSlice UtilDef)
+add_dependencies(BackwardSlice_test UtilDef)
 add_dependencies(TraceAllComponents UtilDef)
