@@ -100,7 +100,7 @@ add_subdirectory(lib)
 add_executable(TestTool testtool.cpp)
 
 target_compile_options(TestTool PUBLIC -g -Wall)
-target_link_libraries(TestTool BackwardSlice TraceAllComponents)
+target_link_libraries(TestTool BackwardSlice TraceAllComponents BackwardSlice_test)
 #target_include_directories(TestTool PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set_target_properties( TestTool PROPERTIES
