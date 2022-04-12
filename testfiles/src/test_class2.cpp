@@ -38,12 +38,20 @@ int main ( void )
     a.mA2 = 2;
     a.mA3 = 3;
     a.mA4 = 4;
+    a.mA1 = 11;
+    a.mA2 = 22;
+    a.mA3 = 33;
+    a.mA4 = 44;
     a.objB = new B;
 
     a.objB->mB1 = 5;
     a.objB->mB2 = 6;
     a.objB->mB3 = 7;
     a.objB->mB4 = 8;
+    a.objB->mB1 = 9;
+    a.objB->mB2 = 10;
+    a.objB->mB3 = 11;
+    a.objB->mB4 = 12;
 
     A *pa = new A;
     pa->mA1 = 1;
