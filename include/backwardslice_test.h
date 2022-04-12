@@ -17,18 +17,22 @@ class BackwardSlice {
 private:
     map <Function*, SliceUtil*> *_sliced_func_list;
 public:
+    BackwardSlice( void )
+        : _sliced_func_list( new map <Function*, SliceUtil*> )
+    {}
+
     // Intra-level backward slice
-    void IntraSlicing( Function *func );
+    void IntraSlicing               ( Function *func );
 
     // Intra-level slicing must be done before calling below functions
-    void AppendBranchConditionInst( Function *func );
-    void InterSlicing( Function *func );
+    void AppendBranchConditionInst  ( Function *func );
+    void InterSlicing               ( Function *func );
 
     // print result of backward slice
-    void Print( Function *func, Value *value ); 
+    void Print                      ( Function *func, Value *value ); 
 
     // print sliced variable list
-    void PrintValueList( Function *func );
+    void PrintByValueIdx            ( Function *func );
 };
 
 #endif

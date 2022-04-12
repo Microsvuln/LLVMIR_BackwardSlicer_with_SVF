@@ -1,4 +1,4 @@
-#include "backwardslice.h"
+#include "backwardslice_test.h"
 #include "traceallcomponents.h"
 
 // For getting llvm IR file as argv 
@@ -19,7 +19,7 @@ int main( int argc, char *argv[] )
     SVF::SVFModule *svfModule = SVF::LLVMModuleSet::getLLVMModuleSet()->buildSVFModule( moduleNameVec );
     svfModule->buildSymbolTableInfo();
 
-    Backward *bw = new Backward;
+    BackwardSlice *bw = new BackwardSlice;
 
     vector<Function*> functions;
     vector<bool> isSliced;
@@ -49,18 +49,10 @@ int main( int argc, char *argv[] )
         }
         case -2:
         {
-            outs() << "idx : ";
-            cin >> idx;
-            for ( int i = idx; i < functions.size(); i ++ ) {
-                bw->SliceFunction( functions[i] );
-            }
             break;
         }
         case -3:
         {
-            outs() << "idx : ";
-            cin >> idx;
-            PrintByFunction( functions[idx] );
             break;
         }
         default:
@@ -68,12 +60,10 @@ int main( int argc, char *argv[] )
             Function *func = functions[idx];
             //PrintByFunction( functions[idx] );
             if ( !isSliced[idx] ) {
-                bw->SliceFunction( func );
+                bw->IntraSlicing( func );
                 isSliced[idx] = true;
             }
-            bw->PrintValueList( func );
-            cin >> idx;
-            bw->PrintByValueIdx( func, idx );
+            bw->PrintByValueIdx( func );
             //bw->PrintByFunction( functions[idx] );
             break;
         }
