@@ -16,13 +16,14 @@ using namespace llvm;
 
 class SliceUtil {
 private:
-    map <Value*, vector<Instruction*>*>         *_sliced_insts_value_list;
-    map <BasicBlock*, vector<Instruction*>*>    *_sliced_insts_block_list;
-    map <Value*, Value*>                        *_pointer_list_table;
-    map <Value*, vector<Value*>*>               *_alias_list;
-    map <string, vector<GetElementPtrInst*>*>   *_element_list;
-    map <string, GetElementPtrInst*>            *_head_element_list;
-    vector <Value*>                             *_values;
+    map <Value*, vector<Instruction*>*>*         _sliced_insts_value_list;
+    map <BasicBlock*, vector<Instruction*>*>*    _sliced_insts_block_list;
+    map <Value*, Value*>*                        _pointer_list_table;
+    map <Value*, vector<Value*>*>*               _alias_list;
+    map <string, vector<GetElementPtrInst*>*>*   _element_list;
+    map <string, GetElementPtrInst*>*            _head_element_list;
+    vector <Value*>*                             _values;
+    Value*                                       _return_value;
 public:
     SliceUtil( void )
         : _sliced_insts_value_list( new map <Value*, vector<Instruction*>*> )
@@ -52,6 +53,7 @@ public:
     // For handling pointer
     void    AppendPointerList   ( Value *pointee, Value *pointer );
     Value*  GetPointingValue    ( Value *value );
+    Value*  GetPointerValue     ( Value *value );
     bool    CreateAliasList     ( Value *value );
     void    AppendAliasList     ( Value *head_value, Value *value );
     Value*  GetAliasHeadValue   ( Value *value );
