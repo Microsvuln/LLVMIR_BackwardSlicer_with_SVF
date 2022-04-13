@@ -18,7 +18,7 @@ class SliceUtil {
 private:
     map <Value*, vector<Instruction*>*>         *_sliced_insts_value_list;
     map <BasicBlock*, vector<Instruction*>*>    *_sliced_insts_block_list;
-    map <Value*, vector<Value*>*>               *_pointer_list_table;
+    map <Value*, Value*>                        *_pointer_list_table;
     map <Value*, vector<Value*>*>               *_alias_list;
     map <string, vector<GetElementPtrInst*>*>   *_element_list;
     map <string, GetElementPtrInst*>            *_head_element_list;
@@ -27,7 +27,7 @@ public:
     SliceUtil( void )
         : _sliced_insts_value_list( new map <Value*, vector<Instruction*>*> )
         , _sliced_insts_block_list( new map <BasicBlock*, vector<Instruction*>*> )
-        , _pointer_list_table( new map <Value*, vector<Value*>*> )
+        , _pointer_list_table( new map <Value*, Value*> )
         , _alias_list( new map <Value*, vector<Value*>*> )
         , _element_list( new map <string, vector<GetElementPtrInst*>*> )
         , _head_element_list( new map <string, GetElementPtrInst*> )
@@ -50,7 +50,6 @@ public:
     void Merge ( Value *value_dst, Value *value_src );
 
     // For handling pointer
-    bool    CreatePointerList   ( Value *value );
     void    AppendPointerList   ( Value *pointee, Value *pointer );
     Value*  GetPointingValue    ( Value *value );
     bool    CreateAliasList     ( Value *value );

@@ -119,34 +119,22 @@ void SliceUtil::Merge( Value *value_dst, Value *value_src )
     }
 }
 
-bool SliceUtil::CreatePointerList( Value *value )
+void SliceUtil::AppendPointerList( Value *pointer, Value *pointee )
 {
-    if ( _pointer_list_table->find( value ) != _pointer_list_table->end() ) {
-        return false;
+    if ( _pointer_list_table->find( pointer ) == _pointer_list_table->end() ) {
+        _pointer_list_table->emplace( pointer, pointee );
+        return;
     }
-
-    _pointer_list_table->emplace( value, new vector<Value*> );
-    return true;
-}
-
-void SliceUtil::AppendPointerList( Value *pointee, Value *pointer )
-{
-    assert( _pointer_list_table->find( pointee ) != _pointer_list_table->end() && "Pointee's list does not exist");
-
-    _pointer_list_table->at( pointee )->push_back( pointer );
+    _pointer_list_table->at( pointer ) = pointee;
 }
 
 Value *SliceUtil::GetPointingValue( Value *value )
 {
-    for ( auto it : *_pointer_list_table ) {
-        for ( auto pointer : *( it.second ) ) {
-            if ( pointer == value ) {
-                return it.first;
-            }
-        }
+    if ( _pointer_list_table->find( value ) == _pointer_list_table->end() ) {
+        return nullptr;
     }
 
-    return nullptr;
+    return _pointer_list_table->at( value );
     //assert( false && "Not found pointing value" );
 }
 
@@ -298,63 +286,28 @@ void SliceUtil::Slicing( Instruction *inst ) {
 
         if ( aliasHeadValue != nullptr && varHeadElem != nullptr ) {
             //assert( false && "object has both alias, elem" );
-            hash = MakeHash( varHeadElem, false );
             AppendElementList( hash, gepinst );
-            GetElementPtrInst *head_value = GetHeadElement( hash );
-            Value *pointee = GetPointingValue( head_value );
-            if (  pointee != nullptr ) {
-                AppendPointerList( pointee, inst );
-            }                
-            AppendInstForValue( head_value, inst );
-            Merge( head_value, aliasHeadValue );
-            Merge( head_value, varHeadElem );
         }
-        else if ( aliasHeadValue != nullptr ) {
+        else if ( aliasHeadValue != nullptr ) { // O
             if ( CreateElementList( hash, gepinst ) ) {
                 CreateListForValue( gepinst );
-                AppendInstForValue( inst, inst );
-                Merge( inst, aliasHeadValue );
             }
             else {
                 AppendElementList( hash, gepinst );
-                GetElementPtrInst *head_value = GetHeadElement( hash );
-                Value *pointee = GetPointingValue( head_value );
-                if (  pointee != nullptr ) {
-                    AppendPointerList( pointee, inst );
-                }                
-                AppendInstForValue( head_value, inst );
-                Merge( head_value, aliasHeadValue );
             }
             
         }
         else if ( varHeadElem != nullptr ) {
             AppendElementList( hash, gepinst );
-            GetElementPtrInst *head_value = GetHeadElement( hash );
-            Value *pointee = GetPointingValue( head_value );
-            if (  pointee != nullptr ) {
-                AppendPointerList( pointee, inst );
-            }                
-            AppendInstForValue( head_value, inst );
-            Merge( head_value, object );
         }
         else {
             if ( CreateElementList( hash, gepinst ) ) {
                 CreateListForValue( gepinst );
-                AppendInstForValue( inst, inst );
-                Merge( inst, object );
             }
             else {
                 AppendElementList( hash, gepinst );
-                GetElementPtrInst *head_value = GetHeadElement( hash );
-                Value *pointee = GetPointingValue( head_value );
-                if (  pointee != nullptr ) {
-                    AppendPointerList( pointee, inst );
-                }                
-                AppendInstForValue( head_value, inst );
-                Merge( head_value, object );
             }
         }
-        
         break;
     }
     case Instruction::Store :
@@ -364,9 +317,11 @@ void SliceUtil::Slicing( Instruction *inst ) {
         GetElementPtrInst *varHeadElem = nullptr;
         Value *varHeadAlias = nullptr;
 
-        if ( GetAliasHeadValue( value ) ) {
-            assert( false && "Value has alias head value" );
+        if ( _sliced_insts_value_list->find( var ) == _sliced_insts_value_list->end() ) {
+            CreateListForValue( var );
         }
+
+        Value *value_head = GetHeadValue( value );
 
         varHeadAlias = GetAliasHeadValue( var );
 
@@ -383,31 +338,37 @@ void SliceUtil::Slicing( Instruction *inst ) {
         }
         else if ( varHeadAlias != nullptr ) {
             if ( value->getType()->isPointerTy() ) {
-                CreatePointerList( value );
-                AppendPointerList( value, varHeadAlias );
+                AppendPointerList( varHeadAlias, value );
             }
             if ( _sliced_insts_value_list->find( value ) != _sliced_insts_value_list->end() ) {
                 Merge( varHeadAlias, value );
+            }
+            if ( _sliced_insts_value_list->find( value_head ) != _sliced_insts_value_list->end() ) {
+                Merge( varHeadAlias, value_head );
             }
             AppendInstForValue( varHeadAlias, inst );
         }
         else if ( varHeadElem != nullptr ) {
             if ( value->getType()->isPointerTy() ) {
-                CreatePointerList( value );
-                AppendPointerList( value, varHeadElem );
+                AppendPointerList( varHeadElem, value );
             }
             if ( _sliced_insts_value_list->find( value ) != _sliced_insts_value_list->end() ) {
                 Merge( varHeadElem, value );
+            }
+            if ( _sliced_insts_value_list->find( value_head ) != _sliced_insts_value_list->end() ) {
+                Merge( varHeadElem, value_head );
             }
             AppendInstForValue( varHeadElem, inst );
         }
         else {
             if ( value->getType()->isPointerTy() ) {
-                CreatePointerList( value );
-                AppendPointerList( value, var );
+                AppendPointerList( var, value );
             }
             if ( _sliced_insts_value_list->find( value ) != _sliced_insts_value_list->end() ) {
                 Merge( var, value );
+            }
+            if ( _sliced_insts_value_list->find( value_head ) != _sliced_insts_value_list->end() ) {
+                Merge( var, value_head );
             }
             AppendInstForValue( var, inst );
         }
@@ -421,9 +382,13 @@ void SliceUtil::Slicing( Instruction *inst ) {
         Value *var = inst->getOperand( 0 );
         Value *pointing_value = nullptr;
         Value *varHeadAlias = GetAliasHeadValue( var );
+        bool is_alias = true;
+        if ( varHeadAlias == nullptr ) {
+            is_alias = false;
+        }
         Value *varHeadElem = nullptr;
         if ( var->getValueID() == Value::InstructionVal + Instruction::GetElementPtr) {
-                varHeadElem = GetHeadElement( MakeHash( dyn_cast<GetElementPtrInst>( var ), varHeadAlias ) );
+                varHeadElem = GetHeadElement( MakeHash( dyn_cast<GetElementPtrInst>( var ), is_alias ) );
         }
 
         if ( varHeadAlias != nullptr && varHeadElem != nullptr ) {
@@ -435,7 +400,6 @@ void SliceUtil::Slicing( Instruction *inst ) {
                 CreateAliasList( pointing_value );
                 AppendAliasList( pointing_value, inst );
             }
-            //AppendInstForValue( varHeadAlias, inst );
         }
         else if ( varHeadElem != nullptr ) {
             pointing_value = GetPointingValue( varHeadElem );
@@ -443,7 +407,6 @@ void SliceUtil::Slicing( Instruction *inst ) {
                 CreateAliasList( pointing_value );
                 AppendAliasList( pointing_value, inst );
             }
-            //AppendInstForValue( varHeadElem, inst );
         }
         else {
             pointing_value = GetPointingValue( var );
@@ -451,12 +414,15 @@ void SliceUtil::Slicing( Instruction *inst ) {
                 CreateAliasList( pointing_value );
                 AppendAliasList( pointing_value, inst );
             }
-            //AppendInstForValue( var, inst );
         }
-        CreateListForValue( inst );
-        AppendInstForValue( inst, inst );
-        Merge( inst, GetHeadValue ( inst->getOperand( 0 ) ) );
-        Merge( GetHeadValue ( inst->getOperand( 0 ) ), inst );
+        if ( var->getType()->getContainedType( 0 )->getTypeID() != Type::PointerTyID ) {
+            if ( _sliced_insts_value_list->find( var ) == _sliced_insts_value_list->end() ) {
+                CreateListForValue( var );
+                AppendInstForValue( var, inst );
+            }
+            CreateAliasList( var );
+            AppendAliasList( var, inst );
+        }
         break;
     }
     
@@ -464,7 +430,7 @@ void SliceUtil::Slicing( Instruction *inst ) {
     case Instruction::Br :
     case Instruction::Switch :
     {
-        
+        assert( false && "branch" );
         break;
     }
     
@@ -503,6 +469,21 @@ void SliceUtil::Slicing( Instruction *inst ) {
     case Instruction::Or :
     case Instruction::Xor :
     {
+        Value *op1 = inst->getOperand( 0 );
+        Value *op1_head_value = GetHeadValue( op1 );
+        Value *op2 = inst->getOperand( 1 );
+        Value *op2_head_value = GetHeadValue( op2 );
+        
+        CreateListForValue( inst );
+        AppendInstForValue( inst, inst );
+        if ( op1 != op1_head_value &&
+            _sliced_insts_value_list->find( op1_head_value ) != _sliced_insts_value_list->end() ) {
+            Merge( inst, op1_head_value );
+        }
+        if ( op2 != op2_head_value &&
+            _sliced_insts_value_list->find( op2_head_value ) != _sliced_insts_value_list->end() ) {
+            Merge( inst, op2_head_value );
+        }
         
         break;
     }
@@ -510,13 +491,18 @@ void SliceUtil::Slicing( Instruction *inst ) {
     // Unary operator
     case Instruction::FNeg:
     {
+        Value *op = inst->getOperand( 0 );
+        Value *head_value = GetHeadValue( op );
         
+        CreateAliasList( head_value );
+        AppendAliasList( head_value, inst );
+
         break;
     }
     
     case Instruction::Select :
     {
-        
+        assert( false && "Select" );
         break;
     }
     
@@ -533,35 +519,40 @@ void SliceUtil::Slicing( Instruction *inst ) {
     }
     case Instruction::Call :
     {
-        // assert( false && "Call" );
+        //assert( false && "Call" );
         CreateListForValue( inst );
         AppendInstForValue( inst, inst );
+        for ( int i = 0; i < inst->getNumOperands() - 1; i ++ ) {
+            Value *head_value = GetHeadValue( inst->getOperand( i ) );
+            if ( _sliced_insts_value_list->find( head_value ) != _sliced_insts_value_list->end() )
+                Merge( inst, head_value );
+        }
         break;
     }
     case Instruction::ShuffleVector :
     {
-        //assert( false && "ShuffleVector" );
+        assert( false && "ShuffleVector" );
         break;
     }
     case Instruction::Ret :
     {  
-        //assert( false && "Ret" );
+        assert( false && "Ret" );
         break;
     }
     case Instruction::PHI :
     {
-        //assert( false && "PHI" );
+        assert( false && "PHI" );
         break;
     }
     case Instruction::InsertElement :
     {
-        //assert( false && "InsertElement" );
+        assert( false && "InsertElement" );
         break;
     }
     case Instruction::InsertValue :
     {
         
-        //assert( false && "InsertValue" );
+        assert( false && "InsertValue" );
         
         break;
     }
@@ -572,17 +563,17 @@ void SliceUtil::Slicing( Instruction *inst ) {
     }
     case Instruction::ExtractElement :
     {
-        //assert( false && "ExtractElement" );
+        assert( false && "ExtractElement" );
         break;
     }
     case Instruction::ExtractValue :
     {
-        //assert( false && "ExtractValue" );
+        assert( false && "ExtractValue" );
         break;
     }
     case Instruction::LandingPad :
     {
-        //assert( false && "LandingPad" );
+        assert( false && "LandingPad" );
         break;
     }
     // casting operators
@@ -600,10 +591,7 @@ void SliceUtil::Slicing( Instruction *inst ) {
     case Instruction::BitCast :
     case Instruction::AddrSpaceCast :
     {
-        //assert( false && "PtrToInt" ); 
-        CreateListForValue( inst );
-        AppendInstForValue( inst, inst );
-        Merge( inst, inst->getOperand( 0 ) );
+        assert( false && "casting op" ); 
         break;
     }
 
@@ -619,7 +607,7 @@ void SliceUtil::Slicing( Instruction *inst ) {
         assert( false && "Not handled instruction" );
         break;
     }
-    ForDebugPrint();
+    //ForDebugPrint();
 }
 
 void SliceUtil::ForDebugPrint( void )
