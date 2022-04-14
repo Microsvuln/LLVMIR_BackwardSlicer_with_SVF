@@ -28,6 +28,12 @@ void BackwardSlice::IntraSlicing( Function *func )
     _sliced_func_list->emplace( func, newSliceUtil );
 }
 
+void BackwardSlice::InterSlicing( Function *func )
+{
+    SliceUtil *sliceutil = _sliced_func_list->at( func );
+    
+}
+
 void BackwardSlice::Print( Function *func, Value *value )
 {
     outs() << "Func : " << func->getName() << "\n";

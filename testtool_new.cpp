@@ -31,7 +31,8 @@ int main( int argc, char *argv[] )
         //outs() << pasMsg("Function : " + func->getName() + "\n" );
         Function *llvmFunc = func->getLLVMFun();
         functions.push_back( llvmFunc );
-        outs() << to_string( i ++ ) << " : " << llvmFunc->getName() << "\n";
+        outs() << to_string( i ) << " : " << llvmFunc->getName() << "\n";
+        i ++;
     }
     isSliced.resize( functions.size() );
     std::fill( isSliced.begin(), isSliced.end(), false );

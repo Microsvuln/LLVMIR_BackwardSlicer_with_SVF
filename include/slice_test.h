@@ -26,13 +26,13 @@ private:
     Value*                                       _return_value;
 public:
     SliceUtil( void )
-        : _sliced_insts_value_list( new map <Value*, vector<Instruction*>*> )
-        , _sliced_insts_block_list( new map <BasicBlock*, vector<Instruction*>*> )
-        , _pointer_list_table( new map <Value*, Value*> )
-        , _alias_list( new map <Value*, vector<Value*>*> )
-        , _element_list( new map <string, vector<GetElementPtrInst*>*> )
-        , _head_element_list( new map <string, GetElementPtrInst*> )
-        , _values( new vector<Value*> )
+        : _sliced_insts_value_list  ( new map <Value*, vector<Instruction*>*> )
+        , _sliced_insts_block_list  ( new map <BasicBlock*, vector<Instruction*>*> )
+        , _pointer_list_table       ( new map <Value*, Value*> )
+        , _alias_list               ( new map <Value*, vector<Value*>*> )
+        , _element_list             ( new map <string, vector<GetElementPtrInst*>*> )
+        , _head_element_list        ( new map <string, GetElementPtrInst*> )
+        , _values                   ( new vector<Value*> )
     {}
 
     void PrintSliceResult   ( Value *value ) const;
