@@ -1,13 +1,14 @@
-void foo( int a )
+int foo( int a )
 {
-    int b = a + 1;
+    return a + 1;
 }
 
 int main( void )
 {
-    void (*pfunc)(int) = foo;
+    int local;
+    int (*pfunc)(int) = foo;
 
-    pfunc( 2 );
+    local = pfunc( 2 );
 
     return 0;
 }

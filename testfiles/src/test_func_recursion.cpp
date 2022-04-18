@@ -10,7 +10,8 @@ int foo( int a )
 
 int main( void )
 {
-    foo ( 1 );
+    int result;
+    result = foo ( 1 );
 
     return 0;
 }
