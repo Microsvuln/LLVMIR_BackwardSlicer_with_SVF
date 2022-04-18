@@ -43,31 +43,35 @@ int main( int argc, char *argv[] )
         outs() << "select : ";
         cin >> idx;
         switch( idx ) {
-        case -1:
-        {
-            done = true;
-            break;
-        }
-        case -2:
-        {
-            break;
-        }
-        case -3:
-        {
-            break;
-        }
-        default:
-        {
-            Function *func = functions[idx];
-            //PrintByFunction( functions[idx] );
-            if ( !isSliced[idx] ) {
-                bw->IntraSlicing( func );
-                isSliced[idx] = true;
+            case -1:
+            {
+                done = true;
+                break;
             }
-            bw->PrintByValueIdx( func );
-            //bw->PrintByFunction( functions[idx] );
-            break;
-        }
+            case -2:
+            {
+                outs() << "function idx : ";
+                cin >> idx;
+                Function *func = functions[idx];
+                PrintByFunction( func );
+                break;
+            }
+            case -3:
+            {
+                break;
+            }
+            default:
+            {
+                Function *func = functions[idx];
+                //PrintByFunction( functions[idx] );
+                if ( !isSliced[idx] ) {
+                    bw->BackwardSlicing( func );
+                    isSliced[idx] = true;
+                }
+                bw->PrintByValueIdx( func );
+                //bw->PrintByFunction( functions[idx] );
+                break;
+            }
         }
         if ( done ) {
             break;
