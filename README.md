@@ -8,7 +8,7 @@ Link: [SVF](https://github.com/SVF-tools/SVF)
 # Usage
 Before build code, you must run "setup.sh" in SVF.
 ```
-cd SVF_Practice
+cd LLVMIR_BackwardSlicer_with_SVF
 mkdir build && cd build
 cmake ..
 make
