@@ -17,7 +17,7 @@ using namespace llvm;
 class BackwardSlice {
 private:
     map <Function*, SliceUtil*>*    _sliced_func_list;
-    set<string>*                 _ignore_func_list_for_interslice;
+    set<string>*                    _ignore_func_list_for_interslice;
 public:
     BackwardSlice( void )
         : _sliced_func_list( new map <Function*, SliceUtil*> )
@@ -35,14 +35,14 @@ public:
         _ignore_func_list_for_interslice->insert( "_ZN4uORB10DeviceNodeC1EPK12orb_metadatahPKch" );
     }
 
-    void BackwardSlicing            ( Function *func );
+    void BackwardSlicing            ( Function *func, map<Function*, int> *call_list );
 
     // Intra-level backward slice
     void IntraSlicing               ( Function *func );
 
     // Intra-level slicing must be done before calling below functions
     void AppendBranchConditionInst  ( Function *func );
-    void InterSlicing               ( Function *func );
+    void InterSlicing               ( Function *func, map<Function*, int> *call_list );
 
     // print result of backward slice
     void Print                      ( Function *func, Value *value ); 

@@ -8,22 +8,24 @@
 
 
 
-void BackwardSlice::BackwardSlicing( Function *func )
+void BackwardSlice::BackwardSlicing( Function *func, map<Function*, int> *call_list )
 {
-    if ( _sliced_func_list->find( func ) != _sliced_func_list->end() ) {
-        return ;
+    if( call_list->find( func ) == call_list->end() ) {
+        call_list->emplace( func, 1 );
     }
-    /*
-        위 종료 조건 코드를 intra slice에 넣고, 
-        3번 이상 호출할 경우 종료하는 루틴 필요
-    */
+    else {
+        call_list->at( func ) ++;
+    }
+    for ( auto it : *call_list ) {
+        if ( it.second >= 3 ) {
+            return;
+        }
+    }
 
     outs() << func->getName().str() << ": for debug\n";
-    SliceUtil *newSliceUtil = new SliceUtil;
-    _sliced_func_list->emplace( func, newSliceUtil );
     IntraSlicing( func );
     //AppendBranchConditionInst( func );
-    InterSlicing( func );
+    InterSlicing( func, call_list );
     outs() << "done " << func->getName().str() << ": for debug\n";
     
     // global variable과 관련된 명령어들을 모아놓을 테이블과 관련 로직 필요함.
@@ -32,6 +34,12 @@ void BackwardSlice::BackwardSlicing( Function *func )
 
 void BackwardSlice::IntraSlicing( Function *func )
 {
+    if ( _sliced_func_list->find( func ) != _sliced_func_list->end() ) {
+        return ;
+    }
+    SliceUtil *newSliceUtil = new SliceUtil;
+    _sliced_func_list->emplace( func, newSliceUtil );
+
     UtilDef *util = new UtilDef;
     SliceUtil *sliceUtil = _sliced_func_list->at( func );
 
@@ -54,23 +62,19 @@ void BackwardSlice::AppendBranchConditionInst( Function *func )
     sliceutil->AppendBranchConditionInst();
 }
 
-/*
-function pointer -> 해결하면 끝
-recursion -> 어느 정도 해결, 맨 위 남겨둔 처리 로직 수정하면 될 듯
-*/
-void BackwardSlice::InterSlicing( Function *func )
+void BackwardSlice::InterSlicing( Function *func, map<Function*, int> *call_list )
 {
-    UtilDef *util = new UtilDef;
-    SliceUtil *sliceutil = _sliced_func_list->at( func );
+    UtilDef*    util        = new UtilDef;
+    SliceUtil*  sliceutil   = _sliced_func_list->at( func );
+
     map <Value*, vector<Instruction*>*>* inter_sliced_list = sliceutil->GetInterSlicedList();
     for ( auto it : *sliceutil->GetSlicedList() ) {
-        Value *value = it.first;
-        vector<Instruction*>* inst_list = it.second;
-        inter_sliced_list->emplace( value, new vector<Instruction*> );
-        vector<Instruction*>* inter_inst_list = inter_sliced_list->at( value );
+        Value*                  value       = it.first;
+        vector<Instruction*>*   inst_list   = it.second;
+        vector<Instruction*>*   tmp_merge_list  = new vector<Instruction*>;
 
         for ( auto inst : *inst_list ) {
-            inter_inst_list->push_back( inst );
+            tmp_merge_list->push_back( inst );
             outs() << " [DEBUG] " << util->inst2str( inst ) << "\n";
             
             // 1. Check call instruction or not
@@ -100,7 +104,7 @@ void BackwardSlice::InterSlicing( Function *func )
 
 
                 // 2. Backward slice for called function
-                BackwardSlicing( called_func );
+                BackwardSlicing( called_func, call_list );
 
                 assert( _sliced_func_list->find( called_func ) != _sliced_func_list->end() );
                 SliceUtil *called_func_util = _sliced_func_list->at( called_func );
@@ -117,7 +121,7 @@ void BackwardSlice::InterSlicing( Function *func )
                             param_inst_list = called_func_util->GetInstListByValue( arg );
                         }
                         for ( auto v : *param_inst_list ) {
-                            inter_inst_list->push_back( v );
+                            tmp_merge_list->push_back( v );
                         }
                         break;
                     }
@@ -131,11 +135,15 @@ void BackwardSlice::InterSlicing( Function *func )
                     }
 
                     for ( auto v : *retval_inst_list ) {
-                        inter_inst_list->push_back( v );
+                        tmp_merge_list->push_back( v );
                     }
                 }
             }
         }
+
+        // Merge to inter_list
+        inter_sliced_list->emplace( value, new vector<Instruction*> );
+        inter_sliced_list->at( value ) = tmp_merge_list;
     }
 }
 
