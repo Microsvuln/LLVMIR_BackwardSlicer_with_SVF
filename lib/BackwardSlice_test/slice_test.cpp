@@ -514,7 +514,6 @@ void SliceUtil::Slicing( Instruction *inst ) {
         break;
     }
     
-    // Assume operand 0 is not temporary( unnamed variable )
     case Instruction::Load :
     {
         Value *var = inst->getOperand( 0 );
