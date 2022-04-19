@@ -286,7 +286,7 @@ public:
         }
         case Instruction::GetElementPtr :
         {
-            GetElementPtrInst *gepinst = dyn_cast<GetElementPtrInst>( inst );
+            //GetElementPtrInst *gepinst = dyn_cast<GetElementPtrInst>( inst );
             Value *object = inst->getOperand( 0 );
             /*
             if ( gepinst->getResultElementType()->isPointerTy() ) {
@@ -365,7 +365,7 @@ public:
                 break;
             }
             vector<Value*> labels;
-            for ( int i = 1; i < inst->getNumOperands(); i ++ ) {
+            for ( uint32_t i = 1; i < inst->getNumOperands(); i ++ ) {
                 if ( inst->getOperand( i )->getValueID() == Value::BasicBlockVal ) {
                     labels.push_back( inst->getOperand( i ) );
                 }
@@ -475,7 +475,7 @@ public:
             if ( calledFunc != nullptr ) {
                 assert ( calledFunc->getValueID() == Value::FunctionVal && "Not a Function value" );
                 AppendInst( inst, inst, util );
-                for ( int i = 0; i < inst->getNumOperands() - 1; i ++ ) {
+                for ( uint32_t i = 0; i < inst->getNumOperands() - 1; i ++ ) {
                     AppendInstsByOperand( inst, inst->getOperand( i ), util );
                 }
             }

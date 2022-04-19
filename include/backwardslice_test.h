@@ -38,6 +38,11 @@ public:
         //_ignore_func_list_for_interslice->insert( "px4_sem_wait" );
         //_ignore_func_list_for_interslice->insert( "px4_sem_post" );
 
+        // px4 uorb
+        _ignore_func_list_for_interslice->insert( "_ZN4uORB10DeviceNode7publishEPK12orb_metadataPvPKv" );
+        // parameter값을 class 로 typecasting 해서 함수포인터 맴버변수로 함수호출함. 여기서 막혀서 제외시킴.
+
+
         // iterator
         //_ignore_func_list_for_interslice->insert( "_ZN19IntrusiveSortedListIPN4uORB10DeviceNodeEE8IteratorppEv" );
         //_ignore_func_list_for_interslice->insert( "_ZN19IntrusiveSortedListIPN4uORB10DeviceNodeEE8IteratorC2ES2_" );

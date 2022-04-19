@@ -51,7 +51,7 @@ int main( int argc, char *argv[] )
         {
             outs() << "idx : ";
             cin >> idx;
-            for ( int i = idx; i < functions.size(); i ++ ) {
+            for ( size_t i = idx; i < functions.size(); i ++ ) {
                 bw->SliceFunction( functions[i] );
             }
             break;

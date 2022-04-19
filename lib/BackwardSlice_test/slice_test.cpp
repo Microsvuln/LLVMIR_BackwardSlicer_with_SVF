@@ -541,7 +541,7 @@ void SliceUtil::Slicing( Instruction *inst ) {
             AppendInstForBlock( dyn_cast<BasicBlock>( op1 ), inst );
         }
         else {
-            for ( int i = 1; i < inst->getNumOperands(); i ++ ) {
+            for ( uint32_t i = 1; i < inst->getNumOperands(); i ++ ) {
                 Value *op = inst->getOperand( i );
                 BasicBlock *bb = dyn_cast<BasicBlock>( op );
                 CreateListForBlock( bb );
@@ -680,7 +680,7 @@ void SliceUtil::Slicing( Instruction *inst ) {
         if ( !called_func_return_type->isVoidTy() ) {
             CreateListForValue( inst );
             AppendInstForValue( inst, inst );
-            for ( int i = 0; i < inst->getNumOperands() - 1; i ++ ) {
+            for ( uint32_t i = 0; i < inst->getNumOperands() - 1; i ++ ) {
                 Value *head_value = GetHeadValue( inst->getOperand( i ) );
                 if ( _sliced_insts_value_list->find( head_value ) != _sliced_insts_value_list->end() )
                     Merge( inst, head_value );
@@ -688,7 +688,7 @@ void SliceUtil::Slicing( Instruction *inst ) {
         }
 
         // Check all params and if the value is the same as the param, append call instruction to list.
-        for ( int i = 0; i < call_inst->getNumArgOperands(); i ++ ) {
+        for ( uint32_t i = 0; i < call_inst->getNumArgOperands(); i ++ ) {
             Value *param_head_value = GetHeadValue( call_inst->getOperand( i ) );
             for ( auto it : *_sliced_insts_value_list ) {
                 Value *value = it.first;

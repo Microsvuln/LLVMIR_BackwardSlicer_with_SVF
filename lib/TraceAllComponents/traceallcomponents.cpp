@@ -80,7 +80,7 @@ void PrintAllComponent( SVF::SVFModule *svfModule )
                        << pasMsg( " : " ) << inst << "\n";
                 outs() << pasMsg( "TYPE : " ) << pasMsg( util->getOperatorTypeName( inst ) ) << "\n";
 
-                for ( int i = 0; i < inst->getNumOperands(); i ++ ) {
+                for ( uint32_t i = 0; i < inst->getNumOperands(); i ++ ) {
                     llvm::Value *operand = inst->getOperand( i );
                     std::string operandName = operand->getName().str();
                     //Type::TypeID tid = operand->getType()->getTypeID();
@@ -130,15 +130,15 @@ void PrintByFunction( llvm::Function *func )
             outs() << pasMsg( "<" ) << util->inst2idx( inst ) << pasMsg( util->inst2str( inst ) ) << pasMsg( " >" )
                     << pasMsg( " : " ) << inst << "\n";
             outs() << pasMsg( "TYPE : " ) << pasMsg( util->getOperatorTypeName( inst ) ) << " : " << inst->getOpcode() << "\n";
-            //unsigned int opcode = inst->getOpcode();
+            //uint32_t opcode = inst->getOpcode();
 
-            for ( int i = 0; i < inst->getNumOperands(); i ++ ) {
+            for ( uint32_t i = 0; i < inst->getNumOperands(); i ++ ) {
                 llvm::Value *operand = inst->getOperand( i );
                 std::string operandName = operand->getName().str();
                 //Type::TypeID tid = operand->getType()->getTypeID();
                 outs() << pasMsg( "OPERAND : " ) << pasMsg( operandName ) << "\t\t";
 
-                unsigned int valueID = operand->getValueID();
+                uint32_t valueID = operand->getValueID();
                 if ( valueID == llvm::Value::ConstantIntVal ) {
                     llvm::ConstantInt *constint = dyn_cast<ConstantInt>( operand );
                     outs() << pasMsg( "Int Val! : " ) << pasMsg( std::to_string( constint->getSExtValue() ) );
@@ -172,13 +172,13 @@ void PrintByFunction( llvm::Function *func )
 
                     ConstantExpr *ce_op = dyn_cast<ConstantExpr>( called_op );
                     
-                    for ( int i = 0; i < ce_op->getNumOperands(); i ++ ) {
+                    for ( uint32_t i = 0; i < ce_op->getNumOperands(); i ++ ) {
                         Value *operand = ce_op->getOperand( i );
                         std::string operandName = operand->getName().str();
                         //Type::TypeID tid = operand->getType()->getTypeID();
                         outs() << pasMsg( "  OPERAND : " ) << pasMsg( operandName ) << "\t\t";
 
-                        unsigned int valueID = operand->getValueID();
+                        uint32_t valueID = operand->getValueID();
                         if ( valueID == llvm::Value::ConstantIntVal ) {
                             llvm::ConstantInt *constint = dyn_cast<ConstantInt>( operand );
                             outs() << pasMsg( "Int Val! : " ) << pasMsg( std::to_string( constint->getSExtValue() ) );
@@ -216,14 +216,14 @@ void PrintByFunction( llvm::Function *func )
                 }
 
                 outs() << "param, arg : ";
-                for ( int i = 0; i < ci->getNumArgOperands(); i ++ ) {
+                for ( uint32_t i = 0; i < ci->getNumArgOperands(); i ++ ) {
                     Value *param = ci->getArgOperand( i );
                     Value *arg = calledFunc->getArg( i );
                     outs() << param->getName() << ", " << arg->getName() << " | ";
                 }
 
                 outs() << "\nParam Attr : ";
-                for ( int i = 0; i < ci->getNumOperands() - 1; i ++ ) {
+                for ( uint32_t i = 0; i < ci->getNumOperands() - 1; i ++ ) {
                     //Attribute::hasAttribute(StringRef Kind) 
                     Attribute attr = calledFunc->getArg( i )->getAttribute(Attribute::AttrKind::Dereferenceable);
                     auto op = ci->getOperand( i );

@@ -60,7 +60,7 @@ public:
         //else if(isa<CallBrInst>(inst)) assert(0 && "[Error]: Does CallBrInst exist?");
         else return false;
     }
-
+/*
     virtual bool isCallInst(const Value *inst){//const Instruction *inst){  
         // Value is more generic and anyhow, it returns NULL if it is just Value
         if(const CallInst *ci = SVFUtil::dyn_cast<CallInst>(inst)) return true;
@@ -68,7 +68,7 @@ public:
         //else if(isa<CallBrInst>(inst)) assert(0 && "[Error]: Does CallBrInst exist?");
         else return false;
     }
-
+*/
     // Util
     inline const Function * v2func(const Value *v){
         const Function *func = NULL;

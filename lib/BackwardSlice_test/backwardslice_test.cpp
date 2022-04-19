@@ -104,10 +104,10 @@ void BackwardSlice::InterSlicing( Function *func )
                 SliceUtil *called_func_util = _sliced_func_list->at( called_func );
 
                 // 3. Merge results to caller
-                for ( int i = 0; i < call_inst->getNumArgOperands(); i ++ ) {
+                for ( uint32_t i = 0; i < call_inst->getNumArgOperands(); i ++ ) {
                     Value *param = call_inst->getArgOperand( i );
                     Value *arg = called_func->getArg( i );
-                    Value *param_head_value = called_func_util->GetHeadValue( param );
+                    //Value *param_head_value = called_func_util->GetHeadValue( param );
  
                     if ( value == param ) {
                         vector<Instruction*> *param_inst_list = called_func_util->GetInterInstListByValue( arg );
