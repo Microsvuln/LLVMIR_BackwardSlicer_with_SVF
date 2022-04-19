@@ -23,33 +23,16 @@ public:
         : _sliced_func_list( new map <Function*, SliceUtil*> )
         , _ignore_func_list_for_interslice( new set<string> )
     {
-        // standard
-        _ignore_func_list_for_interslice->insert( "_Znam" );
-        _ignore_func_list_for_interslice->insert( "_Znwm" );
-        _ignore_func_list_for_interslice->insert( "strcmp" );
-        //_ignore_func_list_for_interslice->insert( "_ZNSt3__112basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6assignEPKc" );
-
-        // llvm function
-        _ignore_func_list_for_interslice->insert( "llvm.lifetime.end.p0i8" );
-        
-        // px4 general functions
-        //_ignore_func_list_for_interslice->insert( "hrt_absolute_time" );
-        //_ignore_func_list_for_interslice->insert( "px4_sem_init" );
-        //_ignore_func_list_for_interslice->insert( "px4_sem_wait" );
-        //_ignore_func_list_for_interslice->insert( "px4_sem_post" );
-
         // px4 uorb
-        _ignore_func_list_for_interslice->insert( "_ZN4uORB10DeviceNode7publishEPK12orb_metadataPvPKv" );
         // parameter값을 class 로 typecasting 해서 함수포인터 맴버변수로 함수호출함. 여기서 막혀서 제외시킴.
+        _ignore_func_list_for_interslice->insert( "_ZN4uORB10DeviceNode7publishEPK12orb_metadataPvPKv" );
+        _ignore_func_list_for_interslice->insert( "_ZN4uORB12DeviceMaster9advertiseEPK12orb_metadatabPi" );
+        
 
-
-        // iterator
-        //_ignore_func_list_for_interslice->insert( "_ZN19IntrusiveSortedListIPN4uORB10DeviceNodeEE8IteratorppEv" );
-        //_ignore_func_list_for_interslice->insert( "_ZN19IntrusiveSortedListIPN4uORB10DeviceNodeEE8IteratorC2ES2_" );
-        //_ignore_func_list_for_interslice->insert( "_ZN19IntrusiveSortedListIPN4uORB10DeviceNodeEE8IteratorC1ES2_" );
-        //_ignore_func_list_for_interslice->insert( "_ZN19IntrusiveSortedListIPN4uORB10DeviceNodeEE3endEv" );
-        //_ignore_func_list_for_interslice->insert( "_ZN19IntrusiveSortedListIPN4uORB10DeviceNodeEE8IteratorppEv" );
-
+        // px4 constructor
+        // @_ZN4uORB12DeviceMasterC1Ev = hidden unnamed_addr alias void (%"class.uORB::DeviceMaster"*), void (%"class.uORB::DeviceMaster"*)* @_ZN4uORB12DeviceMasterC2Ev
+        _ignore_func_list_for_interslice->insert( "_ZN4uORB12DeviceMasterC1Ev" );
+        _ignore_func_list_for_interslice->insert( "_ZN4uORB10DeviceNodeC1EPK12orb_metadatahPKch" );
     }
 
     void BackwardSlicing            ( Function *func );

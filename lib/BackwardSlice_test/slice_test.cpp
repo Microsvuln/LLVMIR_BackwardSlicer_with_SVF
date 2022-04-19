@@ -424,6 +424,18 @@ Value* SliceUtil::GetHeadValue( Value* value )
     return value;
 }
 
+bool SliceUtil::IsIgnoreFunc( Instruction *inst ) {
+    assert( inst->getOpcode() == Instruction::Call );
+    string inst_str = _util->inst2str( inst );
+    for ( auto func_name : *_ignore_func_list ) {
+        if ( inst_str.find( func_name ) != string::npos ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void SliceUtil::Slicing( Instruction *inst ) {
     outs() << SVF::SVFUtil::pasMsg( _util->inst2str( inst ) ) << "\n";
     switch ( inst->getOpcode() ) {
@@ -590,6 +602,8 @@ void SliceUtil::Slicing( Instruction *inst ) {
     case Instruction::And :
     case Instruction::Or :
     case Instruction::Xor :
+    // atomic
+    case Instruction::AtomicRMW :
     {
         Value *op1 = inst->getOperand( 0 );
         Value *op1_head_value = GetHeadValue( op1 );
@@ -648,14 +662,12 @@ void SliceUtil::Slicing( Instruction *inst ) {
         assert( false && "AtomicCmpXchg" );
         break;
     }
-    case Instruction::AtomicRMW :
-    {
-        assert( false && "AtomicRMW" );
 
-        break;
-    }
     case Instruction::Call :
     {
+        if ( IsIgnoreFunc( inst ) ) {
+            break;
+        }
         //assert( false && "Call" );
         CallInst*   call_inst   = dyn_cast<CallInst>( inst );
         Value*      called_op   = GetHeadValue( call_inst->getCalledOperand() );
@@ -670,8 +682,9 @@ void SliceUtil::Slicing( Instruction *inst ) {
         }
 
         if ( called_func == nullptr ) {
-            outs() << "assert : " << _util->inst2str( inst ) << "\n";
-            assert( called_func != nullptr && "wrong function operand" );
+            //outs() << "assert : " << _util->inst2str( inst ) << "\n";
+            //assert( called_func != nullptr && "wrong function operand" );
+            break;
         }
 
 

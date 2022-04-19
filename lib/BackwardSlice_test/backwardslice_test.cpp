@@ -18,13 +18,13 @@ void BackwardSlice::BackwardSlicing( Function *func )
         3번 이상 호출할 경우 종료하는 루틴 필요
     */
 
-    //outs() << func->getName().str() << ": for debug\n";
+    outs() << func->getName().str() << ": for debug\n";
     SliceUtil *newSliceUtil = new SliceUtil;
     _sliced_func_list->emplace( func, newSliceUtil );
     IntraSlicing( func );
     //AppendBranchConditionInst( func );
     InterSlicing( func );
-    //outs() << "done " << func->getName().str() << ": for debug\n";
+    outs() << "done " << func->getName().str() << ": for debug\n";
     
     // global variable과 관련된 명령어들을 모아놓을 테이블과 관련 로직 필요함.
     // 각 function별로 global variable 에 대한 slice가 끝났으므로 이를 모두 종합해서 모아주면 될 듯.
@@ -71,7 +71,7 @@ void BackwardSlice::InterSlicing( Function *func )
 
         for ( auto inst : *inst_list ) {
             inter_inst_list->push_back( inst );
-            //outs() << " [DEBUG] " << util->inst2str( inst );
+            outs() << " [DEBUG] " << util->inst2str( inst ) << "\n";
             
             // 1. Check call instruction or not
             if ( inst->getOpcode() == Instruction::Call ) {
@@ -87,7 +87,9 @@ void BackwardSlice::InterSlicing( Function *func )
                     called_func = dyn_cast_or_null<Function>( constantexprvalue->getOperand( 0 ) );
                 }
 
-                if ( _ignore_func_list_for_interslice->find( called_func->getName().str() ) != _ignore_func_list_for_interslice->end() ) {
+                if ( _ignore_func_list_for_interslice->find( called_func->getName().str() ) != _ignore_func_list_for_interslice->end() || 
+                    called_func->size() == 0 ) {
+                        outs() << "pass " << called_func->getName().str() << "\n";
                     continue;
                 }
 
@@ -104,7 +106,7 @@ void BackwardSlice::InterSlicing( Function *func )
                 SliceUtil *called_func_util = _sliced_func_list->at( called_func );
 
                 // 3. Merge results to caller
-                for ( uint32_t i = 0; i < call_inst->getNumArgOperands(); i ++ ) {
+                for ( uint32_t i = 0; i < called_func->getNumOperands(); i ++ ) { // 가변함수 때문에 호출할 때 인자 갯수가 아닌, 함수 정의에 있는 arguement 갯수까지
                     Value *param = call_inst->getArgOperand( i );
                     Value *arg = called_func->getArg( i );
                     //Value *param_head_value = called_func_util->GetHeadValue( param );

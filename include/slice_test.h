@@ -12,22 +12,24 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <set>
 
 using namespace std;
 using namespace llvm;
 
 class SliceUtil {
 private:
-    map <Value*, vector<Instruction*>*>*         _inter_sliced_list;
-    map <Value*, vector<Instruction*>*>*         _sliced_insts_value_list;
-    map <BasicBlock*, vector<Instruction*>*>*    _sliced_insts_block_list;
-    map <Value*, Value*>*                        _pointer_list_table;
-    map <Value*, vector<Value*>*>*               _alias_list;
-    map <string, vector<GetElementPtrInst*>*>*   _element_list;
-    map <string, GetElementPtrInst*>*            _head_element_list;
-    vector <Value*>*                             _values;
-    Value*                                       _return_value;
-    UtilDef*                                     _util;
+    map <Value*, vector<Instruction*>*>*        _inter_sliced_list;
+    map <Value*, vector<Instruction*>*>*        _sliced_insts_value_list;
+    map <BasicBlock*, vector<Instruction*>*>*   _sliced_insts_block_list;
+    map <Value*, Value*>*                       _pointer_list_table;
+    map <Value*, vector<Value*>*>*              _alias_list;
+    map <string, vector<GetElementPtrInst*>*>*  _element_list;
+    map <string, GetElementPtrInst*>*           _head_element_list;
+    vector <Value*>*                            _values;
+    Value*                                      _return_value;
+    UtilDef*                                    _util;
+    set<string>*                                _ignore_func_list;
 public:
     SliceUtil( void )
         : _inter_sliced_list        ( new map <Value*, vector<Instruction*>*> )
@@ -40,13 +42,21 @@ public:
         , _values                   ( new vector<Value*> )
         , _return_value             ( nullptr )
         , _util                     ( new UtilDef )
-    {}
+        ,_ignore_func_list          ( new set<string> )
+    {
+        //px4 constructor
+        // @_ZN4uORB12DeviceMasterC1Ev = hidden unnamed_addr alias void (%"class.uORB::DeviceMaster"*), void (%"class.uORB::DeviceMaster"*)* @_ZN4uORB12DeviceMasterC2Ev
+        _ignore_func_list->insert( "_ZN4uORB12DeviceMasterC1Ev" );
+        _ignore_func_list->insert( "_ZN4uORB10DeviceNodeC1EPK12orb_metadatahPKch" );
+    }
 
     vector<Instruction*>*                   GetInstListByValue      ( Value *value );
     vector<Instruction*>*                   GetInterInstListByValue ( Value *value );
     map <Value*, vector<Instruction*>*>*    GetSlicedList           ( void );
     map <Value*, vector<Instruction*>*>*    GetInterSlicedList      ( void );
     Value*                                  GetReturnValue          ( void );
+
+    bool    IsIgnoreFunc                ( Instruction *inst );
 
     void    AppendBranchConditionInst   ( void );
 
