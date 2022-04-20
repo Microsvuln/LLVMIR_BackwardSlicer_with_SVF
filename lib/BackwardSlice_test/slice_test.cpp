@@ -437,7 +437,7 @@ bool SliceUtil::IsIgnoreFunc( Instruction *inst ) {
 }
 
 void SliceUtil::Slicing( Instruction *inst ) {
-    outs() << SVF::SVFUtil::pasMsg( _util->inst2str( inst ) ) << "\n";
+    //outs() << SVF::SVFUtil::pasMsg( _util->inst2str( inst ) ) << "\n";
     switch ( inst->getOpcode() ) {
 
     case Instruction::Alloca :
