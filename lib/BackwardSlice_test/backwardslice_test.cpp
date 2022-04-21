@@ -78,8 +78,21 @@ void BackwardSlice::IntraSlicing( Function *func )
     for ( int i=0; i<2; i++ ) {
         for ( auto &bb : *func ) {
             for ( auto &inst : bb ) {
+                if ( dyn_cast_or_null<DbgInfoIntrinsic>( &inst ) != nullptr ) {
+                    continue;
+                }
+                /*
+                if ( inst.getOpcode() == Instruction::Call ) {
+                    CallInst *callinst = dyn_cast<CallInst>( &inst );
+                    Function *called_func = callinst->getCalledFunction();
+                    if ( called_func != nullptr && called_func->size() == 0 && called_func->getName()  ) {
+                        continue;
+                    }
+                }
+                
                 if ( util->inst2str( &inst ).find( "llvm.dbg." ) != string::npos )
                         continue;
+                */
                 sliceUtil->Slicing( &inst );
             }
         }

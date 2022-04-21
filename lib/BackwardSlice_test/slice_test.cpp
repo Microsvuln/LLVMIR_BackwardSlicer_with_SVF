@@ -158,7 +158,8 @@ bool SliceUtil::CreateListForBlock( BasicBlock *bb )
 void SliceUtil::AppendInstForValue( Value *value_dst, Instruction *inst )
 {
     if ( _sliced_insts_value_list->find( value_dst ) == _sliced_insts_value_list->end() ) {
-        outs() << "assert : " << _util->inst2str( value_dst ) << "\n";
+        outs() << "assert : " << _util->inst2str( value_dst ) 
+               << " Inst : " << _util->inst2str( inst ) << "\n";
         assert( _sliced_insts_value_list->find( value_dst ) != _sliced_insts_value_list->end() && "Value's list does not exist");
     }
 
@@ -201,8 +202,12 @@ void SliceUtil::AppendInstForBlock( BasicBlock *bb_dst, Instruction *inst )
 
 void SliceUtil::Merge( Value *value_dst, Value *value_src )
 {
-    assert( _sliced_insts_value_list->find( value_dst ) != _sliced_insts_value_list->end() && "Value_dst's list does not exist");
-    assert( _sliced_insts_value_list->find( value_src ) != _sliced_insts_value_list->end() && "Value_src's list does not exist");
+    if ( _sliced_insts_block_list->find( value_src ) == _sliced_insts_block_list->end() || 
+        _sliced_insts_value_list->find( value_dst ) == _sliced_insts_value_list->end() ) {
+            outs() << "dst : " << _util->inst2str( value_dst ) << ", src : " << value_src->getName() << "\n";
+            assert( _sliced_insts_value_list->find( value_dst ) != _sliced_insts_value_list->end() && "Value_dst's list does not exist" );
+            assert( _sliced_insts_block_list->find( value_src ) != _sliced_insts_block_list->end() && "Value_src's list does not exist" );
+    }
 
     vector<Instruction*> *tmp_list = new vector<Instruction*>;
     vector<Instruction*> *dst_list = _sliced_insts_value_list->at( value_dst );
@@ -541,9 +546,10 @@ void SliceUtil::Slicing( Instruction *inst ) {
         if ( var_head_value->getValueID() == Value::GlobalVariableVal ) {
             CreateListForValue( var_head_value );
         }
-        if ( var_head_value->getValueID() == Value::ConstantExprVal ) {
+        else if ( var_head_value->getValueID() == Value::ConstantExprVal ) {
             ConstantExpr *ce_op = dyn_cast<ConstantExpr>( var_head_value );
             var_head_value = GetHeadValue( ce_op->getOperand( 0 ) );
+            CreateListForValue( var_head_value );
         }
 
         Value *pointing_value = GetPointingValue( var_head_value );
@@ -873,6 +879,7 @@ void SliceUtil::Slicing( Instruction *inst ) {
         //assert( false && "casting op" ); 
         CreateAliasList( GetHeadValue( inst->getOperand( 0 ) ) );
         AppendAliasList( GetHeadValue( inst->getOperand( 0 ) ), inst );
+        CreateListForValue( GetHeadValue( inst->getOperand( 0 ) ));
         AppendInstForValue( GetHeadValue( inst->getOperand( 0 ) ), inst );
         break;
     }
