@@ -31,7 +31,7 @@ int main( int argc, char *argv[] )
         //outs() << pasMsg("Function : " + func->getName() + "\n" );
         Function *llvmFunc = func->getLLVMFun();
         functions.push_back( llvmFunc );
-        outs() << to_string( i ) << " : " << llvmFunc->getName() << "\n";
+        //outs() << to_string( i ) << " : " << llvmFunc->getName() << "\n";
         i ++;
     }
     isSliced.resize( functions.size() );
@@ -48,6 +48,7 @@ int main( int argc, char *argv[] )
                 done = true;
                 break;
             }
+            // print instruction informations
             case -2:
             {
                 outs() << "function idx : ";
@@ -56,8 +57,16 @@ int main( int argc, char *argv[] )
                 PrintByFunction( func );
                 break;
             }
+            // Intra-level slice test for all function 
             case -3:
             {
+                for ( auto func : *svfModule ) {
+                    outs() << "Function : " + func->getName() + "\n";
+                    Function *llvmFunc = func->getLLVMFun();
+                    bw->IntraSlicing( llvmFunc );
+                    i ++;
+                }
+                outs() << "done\n";
                 break;
             }
             default:

@@ -261,11 +261,13 @@ void BackwardSlice::InterSlicingByValue( Function *func, Value* target_value, ma
             SliceUtil *called_func_util = _sliced_func_list->at( called_func );
 
             // 4. Interslice for relative with params and return value
-            for ( uint32_t i = 0; i < called_func->getNumOperands(); i ++ ) { // 가변함수 때문에 호출할 때 인자 갯수가 아닌, 함수 정의에 있는 arguement 갯수까지
+            for ( uint32_t i = 0; i < call_inst->getNumArgOperands(); i ++ ) { // 가변함수 때문에 호출할 때 인자 갯수가 아닌, 함수 정의에 있는 arguement 갯수까지
                 Value *param = call_inst->getOperand( i );
                 Value *arg = called_func->getArg( i );
 
+                //outs() << target_value->getName() << " : " << param->getName() << "\n";
                 if ( target_value == param ) {
+                    //outs() << "In! " << target_value->getName() << " : " << param->getName() << "\n";
                     InterSlicingByValue( called_func, arg, call_list );
                     vector<Instruction*> *param_inst_list = called_func_util->GetInterInstListByValue( arg );
                     if ( param_inst_list == nullptr ) {

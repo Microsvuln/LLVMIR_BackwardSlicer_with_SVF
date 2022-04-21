@@ -92,7 +92,7 @@ public:
     // For handling class element
     bool                CreateElementList   ( string hash, GetElementPtrInst *gepinst );
     void                AppendElementList   ( string hash, GetElementPtrInst *gepinst );
-    string              MakeHash            ( GetElementPtrInst *gepinst, bool is_alias );
+    string              MakeHash            ( Instruction *inst, bool is_alias );
     GetElementPtrInst*  GetHeadElement      ( string hash );
 
     

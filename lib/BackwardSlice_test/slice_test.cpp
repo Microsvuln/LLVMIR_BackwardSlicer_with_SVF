@@ -352,11 +352,15 @@ Value *SliceUtil::GetAliasHeadValue( Value *value )
     //assert( false && "Not found alias head_value" );
 }
 
-string SliceUtil::MakeHash( GetElementPtrInst *gepinst, bool is_alias )
+string SliceUtil::MakeHash( Instruction *inst, bool is_alias )
 {
-    string hash;
+    if ( inst->getOpcode() != Instruction::GetElementPtr && inst->getOpcode() != Instruction::ExtractValue ) {
+        assert( false && "inst is not extval or gep" );
+    }
 
-    Value *object = gepinst->getOperand( 0 );
+    
+    string hash;
+    Value *object = inst->getOperand( 0 );
     Value *head_value = GetAliasHeadValue( object );
 
     if ( is_alias ) {
@@ -370,8 +374,8 @@ string SliceUtil::MakeHash( GetElementPtrInst *gepinst, bool is_alias )
         hash += to_string( (uint64_t)head_value );
     }
 
-    for ( uint32_t i = 1; i < gepinst->getNumOperands(); i ++ ) {
-        Value *op = gepinst->getOperand( i );
+    for ( uint32_t i = 1; i < inst->getNumOperands(); i ++ ) {
+        Value *op = inst->getOperand( i );
         if ( op->getValueID() == Value::ConstantIntVal ) {
             ConstantInt *constint = dyn_cast<ConstantInt>( op );
             hash += to_string( constint->getZExtValue() );
@@ -536,6 +540,10 @@ void SliceUtil::Slicing( Instruction *inst ) {
 
         if ( var_head_value->getValueID() == Value::GlobalVariableVal ) {
             CreateListForValue( var_head_value );
+        }
+        if ( var_head_value->getValueID() == Value::ConstantExprVal ) {
+            ConstantExpr *ce_op = dyn_cast<ConstantExpr>( var_head_value );
+            var_head_value = GetHeadValue( ce_op->getOperand( 0 ) );
         }
 
         Value *pointing_value = GetPointingValue( var_head_value );
@@ -796,7 +804,20 @@ void SliceUtil::Slicing( Instruction *inst ) {
     }
     case Instruction::InsertValue :
     {
-        assert( false && "InsertValue" );
+        //assert( false && "InsertValue" );
+        Value *object = inst->getOperand( 0 );
+        Value *object_head_value = GetHeadValue( object );
+        Value *insert_value = inst->getOperand( 1 );
+        Value *insert_head_value = GetHeadValue( insert_value );
+
+        CreateListForValue( inst );
+        AppendInstForValue( inst, inst );
+        if ( _sliced_insts_value_list->find( object_head_value ) != _sliced_insts_value_list->end() ) {
+            Merge( inst, object_head_value );
+        }
+        if ( _sliced_insts_value_list->find( insert_head_value ) != _sliced_insts_value_list->end() ) {
+            Merge( inst, insert_head_value );
+        }
         break;
     }
     case Instruction::Fence :
@@ -806,12 +827,27 @@ void SliceUtil::Slicing( Instruction *inst ) {
     }
     case Instruction::ExtractElement :
     {
-        assert( false && "ExtractElement" );
+        //assert( false && "ExtractElement" );
+        Value *object = inst->getOperand( 0 );
+        Value *object_head_value = GetHeadValue( object );
+        CreateListForValue( inst );
+        AppendInstForValue( inst, inst );
+        if ( _sliced_insts_value_list->find( object_head_value ) != _sliced_insts_value_list->end() ) {
+            Merge( inst, object_head_value );
+        }
         break;
     }
     case Instruction::ExtractValue :
     {
-        assert( false && "ExtractValue" );
+        //assert( false && "ExtractValue" );
+        Value *object = inst->getOperand( 0 );
+        Value *object_head_value = GetHeadValue( object );
+        CreateListForValue( inst );
+        AppendInstForValue( inst, inst );
+        if ( _sliced_insts_value_list->find( object_head_value ) != _sliced_insts_value_list->end() ) {
+            Merge( inst, object_head_value );
+        }
+
         break;
     }
     case Instruction::LandingPad :

@@ -232,6 +232,7 @@ void PrintByFunction( llvm::Function *func )
                     
                     outs() << ", ";
                 }
+                outs() << "numOp : " << calledFunc->getNumOperands() << " argOP : " << ci->getNumArgOperands() << "\n";
                 outs() << "\n";
             }
         }
