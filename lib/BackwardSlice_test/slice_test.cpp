@@ -8,8 +8,11 @@
 vector<Instruction*>* SliceUtil::GetInstListByValue ( Value *value )
 {
     if ( _sliced_insts_value_list->find( value ) == _sliced_insts_value_list->end() ) {
-        outs()  << "assert : " //<< name << ", " 
-                << _util->inst2str( value ) << "\n";
+        outs()  << "assert : ";
+        Instruction *inst = dyn_cast_or_null<Instruction>( value );
+        if ( inst != nullptr )
+            outs() << inst->getFunction()->getName() << " : ";
+        outs() << _util->inst2str( value ) << "\n";
         assert( _sliced_insts_value_list->find( value ) != _sliced_insts_value_list->end() && "Value's list does not exist" );
     }
     
@@ -43,6 +46,11 @@ Value* SliceUtil::GetReturnValue( void )
     return _return_value;
 }
 
+Value* SliceUtil::GetValueByIndex( int idx )
+{
+    return _values->at( idx );
+}
+
 void SliceUtil::AppendBranchConditionInst( void )
 {   
     for ( auto it : *_sliced_insts_value_list ) {
@@ -68,10 +76,17 @@ void SliceUtil::PrintSliceResult( Value *value ) const
 {
     BasicBlock *prev_block = nullptr;
     Function *prev_func = nullptr;
+    vector<Instruction*> *target_list;
 
-    assert( _inter_sliced_list->find( value ) != _inter_sliced_list->end() );
+    if ( _inter_sliced_list->find( value ) == _inter_sliced_list->end() ) {
+        target_list = _sliced_insts_value_list->at( value );
+    }
+    else {
+        target_list = _inter_sliced_list->at( value );
+    }
+    //assert( _inter_sliced_list->find( value ) != _inter_sliced_list->end() );
 
-    for ( auto inst : *_inter_sliced_list->at( value ) ) {
+    for ( auto inst : *target_list ) {
         Function *cur_func = inst->getFunction();
         if ( cur_func != prev_func ) {
             outs() << "--------------------------------------------------\n";
@@ -98,8 +113,8 @@ void SliceUtil::PrintValueList( void ) const
 {
     int i = 0;
     for ( auto value : *_values ) {
-        assert( _inter_sliced_list->find( value ) != _inter_sliced_list->end() );
-        if ( _inter_sliced_list->at( value )->empty() ) {
+        assert( _sliced_insts_value_list->find( value ) != _sliced_insts_value_list->end() );
+        if ( _sliced_insts_value_list->at( value )->empty() ) {
             i ++;
             continue;
         }

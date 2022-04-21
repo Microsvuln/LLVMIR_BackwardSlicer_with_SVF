@@ -6,7 +6,31 @@
 
 #include <iostream>
 
+void BackwardSlice::BackwardSlicingMain( Function *func, map<Function*, int> *call_list )
+{
+    if( call_list->find( func ) == call_list->end() ) {
+        call_list->emplace( func, 1 );
+    }
+    else {
+        call_list->at( func ) ++;
+    }
 
+    //outs() << func->getName().str() << ": for debug\n";
+    IntraSlicing( func );
+    _sliced_func_list->at( func )->PrintValueList();
+    int idx;
+    std::cin >> idx;
+    Value *target_value = _sliced_func_list->at( func )->GetValueByIndex( idx );
+    //AppendBranchConditionInst( func );
+    //InterSlicing( func, call_list );
+    InterSlicingByValue( func, target_value, call_list );
+    //outs() << "done " << func->getName().str() << ": for debug\n";
+
+    call_list->at( func ) --;
+    
+    // global variable과 관련된 명령어들을 모아놓을 테이블과 관련 로직 필요함.
+    // 각 function별로 global variable 에 대한 slice가 끝났으므로 이를 모두 종합해서 모아주면 될 듯.
+}
 
 void BackwardSlice::BackwardSlicing( Function *func, map<Function*, int> *call_list )
 {
@@ -14,7 +38,7 @@ void BackwardSlice::BackwardSlicing( Function *func, map<Function*, int> *call_l
         call_list->emplace( func, 1 );
     }
     else {
-        call_list->at( func ) ++;
+        call_list->at( func ) ++;  
     }
     for ( auto it : *call_list ) {
         if ( it.second >= 3 ) {
@@ -172,20 +196,18 @@ void BackwardSlice::InterSlicing( Function *func, map<Function*, int> *call_list
     }
 }
 
-void InterSliceByValue( Function *func, Value *target_value, map<Function*, int> *call_list )
+void BackwardSlice::InterSlicingByValue( Function *func, Value* target_value, map<Function*, int> *call_list )
 {
     UtilDef*    util        = new UtilDef;
     SliceUtil*  sliceutil   = _sliced_func_list->at( func );
 
-    map <Value*, vector<Instruction*>*>* inter_sliced_list = sliceutil->GetInterSlicedList();
-    Value*                  value       = it.first;
-    vector<Instruction*>*   inst_list   = it.second;
-    vector<Instruction*>*   tmp_merge_list  = new vector<Instruction*>;
+    map <Value*, vector<Instruction*>*>*    inter_sliced_list   = sliceutil->GetInterSlicedList();
+    vector<Instruction*>*                   inst_list           = sliceutil->GetInstListByValue( target_value );
+    vector<Instruction*>*                   tmp_merge_list      = new vector<Instruction*>;
 
     for ( auto inst : *inst_list ) {
         tmp_merge_list->push_back( inst );
         //outs() << " [DEBUG] " << util->inst2str( inst ) << "\n";
-        
         // 1. Check call instruction or not
         if ( inst->getOpcode() == Instruction::Call ) {
             CallInst*   call_inst   = dyn_cast<CallInst>( inst );
@@ -202,48 +224,49 @@ void InterSliceByValue( Function *func, Value *target_value, map<Function*, int>
 
             if ( _ignore_func_list_for_interslice->find( called_func->getName().str() ) != _ignore_func_list_for_interslice->end() || 
                 called_func->size() == 0 ) {
-                    //outs() << "pass " << called_func->getName().str() << "\n";
+                    outs() << "pass(size0) " << called_func->getName().str() << "\n";
                 continue;
             }
 
             if ( called_func == nullptr ) {
-                outs() << "assert : " << util->inst2str( inst ) << "\n";
+                //outs() << "assert : " << util->inst2str( inst ) << "\n";
                 assert( called_func != nullptr && "wrong function operand" );
             }
 
+            // 2. check calling more than 3 times
+            if( call_list->find( called_func ) == call_list->end() ) {
+                call_list->emplace( called_func, 1 );
+            }
+            else {
+                call_list->at( called_func ) ++;  
+            }
 
-            // 2. Backward slice for called function
-            BackwardSlicing( called_func, call_list );
-
-            
-            /*
-            bool is_called_more_than_three_times = false;
+            bool is_called_3times = false;
             for ( auto it : *call_list ) {
                 if ( it.second >= 3 ) {
-                    is_called_more_than_three_times = true;
+                    is_called_3times = true;
                     break;
                 }
             }
-            if ( is_called_more_than_three_times ) {
-                outs() << "Called more than three times..\n";
+            if ( is_called_3times ) {
+                //outs() << "pass(3times) " << called_func->getName().str() << "\n";
+                call_list->at( called_func ) --;
                 continue;
             }
-            if ( _sliced_func_list->find( called_func ) == _sliced_func_list->end() ) {
-                IntraSlicing( called_func );
-            }
-            */
+
+            // 3. Intraslice for called function
             
+            IntraSlicing( called_func );
             
-            assert( _sliced_func_list->find( called_func ) != _sliced_func_list->end() );
             SliceUtil *called_func_util = _sliced_func_list->at( called_func );
 
-            // 3. Merge results to caller
+            // 4. Interslice for relative with params and return value
             for ( uint32_t i = 0; i < called_func->getNumOperands(); i ++ ) { // 가변함수 때문에 호출할 때 인자 갯수가 아닌, 함수 정의에 있는 arguement 갯수까지
                 Value *param = call_inst->getOperand( i );
                 Value *arg = called_func->getArg( i );
-                //Value *param_head_value = called_func_util->GetHeadValue( param );
 
-                if ( value == param ) {
+                if ( target_value == param ) {
+                    InterSlicingByValue( called_func, arg, call_list );
                     vector<Instruction*> *param_inst_list = called_func_util->GetInterInstListByValue( arg );
                     if ( param_inst_list == nullptr ) {
                         param_inst_list = called_func_util->GetInstListByValue( arg );
@@ -257,6 +280,7 @@ void InterSliceByValue( Function *func, Value *target_value, map<Function*, int>
 
             if ( !called_func->getReturnType()->isVoidTy() ) {
                 Value *return_value = called_func_util->GetReturnValue();
+                InterSlicingByValue( called_func, return_value, call_list );
                 vector<Instruction*> *retval_inst_list = called_func_util->GetInterInstListByValue( called_func_util->GetHeadValue( return_value ) );
                 if ( retval_inst_list == nullptr ) {
                     retval_inst_list = called_func_util->GetInstListByValue( called_func_util->GetHeadValue( return_value ) );
@@ -266,11 +290,12 @@ void InterSliceByValue( Function *func, Value *target_value, map<Function*, int>
                     tmp_merge_list->push_back( v );
                 }
             }
+            call_list->at( func ) --;
         }
     }
 
     // Merge to inter_list
-    inter_sliced_list->emplace( value, tmp_merge_list );
+    inter_sliced_list->emplace( target_value, tmp_merge_list );
 }
 
 void BackwardSlice::Print( Function *func, Value *value )

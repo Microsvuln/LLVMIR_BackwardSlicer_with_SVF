@@ -36,6 +36,7 @@ public:
     }
 
     void BackwardSlicing            ( Function *func, map<Function*, int> *call_list );
+    void BackwardSlicingMain        ( Function *func, map<Function*, int> *call_list );
 
     // Intra-level backward slice
     void IntraSlicing               ( Function *func );
@@ -43,6 +44,7 @@ public:
     // Intra-level slicing must be done before calling below functions
     void AppendBranchConditionInst  ( Function *func );
     void InterSlicing               ( Function *func, map<Function*, int> *call_list );
+    void InterSlicingByValue        ( Function *func, Value *target_value, map<Function*, int> *call_list );
 
     // print result of backward slice
     void Print                      ( Function *func, Value *value ); 

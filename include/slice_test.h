@@ -55,6 +55,7 @@ public:
     map <Value*, vector<Instruction*>*>*    GetSlicedList           ( void );
     map <Value*, vector<Instruction*>*>*    GetInterSlicedList      ( void );
     Value*                                  GetReturnValue          ( void );
+    Value*                                  GetValueByIndex         ( int idx );
 
     bool    IsIgnoreFunc                ( Instruction *inst );
 

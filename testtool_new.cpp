@@ -65,7 +65,7 @@ int main( int argc, char *argv[] )
                 Function *func = functions[idx];
                 //PrintByFunction( functions[idx] );
                 if ( !isSliced[idx] ) {
-                    bw->BackwardSlicing( func, new map<Function*, int> );
+                    bw->BackwardSlicingMain( func, new map<Function*, int> );
                     isSliced[idx] = true;
                 }
                 bw->PrintByValueIdx( func );
