@@ -202,11 +202,11 @@ void SliceUtil::AppendInstForBlock( BasicBlock *bb_dst, Instruction *inst )
 
 void SliceUtil::Merge( Value *value_dst, Value *value_src )
 {
-    if ( _sliced_insts_block_list->find( value_src ) == _sliced_insts_block_list->end() || 
+    if ( _sliced_insts_value_list->find( value_src ) == _sliced_insts_value_list->end() || 
         _sliced_insts_value_list->find( value_dst ) == _sliced_insts_value_list->end() ) {
             outs() << "dst : " << _util->inst2str( value_dst ) << ", src : " << value_src->getName() << "\n";
             assert( _sliced_insts_value_list->find( value_dst ) != _sliced_insts_value_list->end() && "Value_dst's list does not exist" );
-            assert( _sliced_insts_block_list->find( value_src ) != _sliced_insts_block_list->end() && "Value_src's list does not exist" );
+            assert( _sliced_insts_value_list->find( value_src ) != _sliced_insts_value_list->end() && "Value_src's list does not exist" );
     }
 
     vector<Instruction*> *tmp_list = new vector<Instruction*>;
@@ -543,14 +543,7 @@ void SliceUtil::Slicing( Instruction *inst ) {
         Value *var = inst->getOperand( 0 );
         Value *var_head_value = GetHeadValue( var );
 
-        if ( var_head_value->getValueID() == Value::GlobalVariableVal ) {
-            CreateListForValue( var_head_value );
-        }
-        else if ( var_head_value->getValueID() == Value::ConstantExprVal ) {
-            ConstantExpr *ce_op = dyn_cast<ConstantExpr>( var_head_value );
-            var_head_value = GetHeadValue( ce_op->getOperand( 0 ) );
-            CreateListForValue( var_head_value );
-        }
+        CreateListForValue( var_head_value );
 
         Value *pointing_value = GetPointingValue( var_head_value );
         if ( pointing_value != nullptr ) {
@@ -650,6 +643,7 @@ void SliceUtil::Slicing( Instruction *inst ) {
         break;
     }
 
+    case Instruction::Freeze:
     // Unary operator
     case Instruction::FNeg:
     {
@@ -687,7 +681,26 @@ void SliceUtil::Slicing( Instruction *inst ) {
     
     case Instruction::AtomicCmpXchg :
     {
-        assert( false && "AtomicCmpXchg" );
+        //assert( false && "AtomicCmpXchg" );
+        Value *op1 = inst->getOperand( 0 );
+        Value *op1_head_value = GetHeadValue( op1 );
+        Value *op2 = inst->getOperand( 1 );
+        Value *op2_head_value = GetHeadValue( op2 );
+        Value *op3 = inst->getOperand( 2 );
+        Value *op3_head_value = GetHeadValue( op3 );
+        
+        CreateListForValue( inst );
+        AppendInstForValue( inst, inst );
+        if ( _sliced_insts_value_list->find( op1_head_value ) != _sliced_insts_value_list->end() ) {
+            Merge( inst, op1_head_value );
+        }
+        if ( _sliced_insts_value_list->find( op2_head_value ) != _sliced_insts_value_list->end() ) {
+            Merge( inst, op2_head_value );
+        }
+        if ( _sliced_insts_value_list->find( op3_head_value ) != _sliced_insts_value_list->end() ) {
+            Merge( inst, op3_head_value );
+        }
+        
         break;
     }
 
@@ -891,8 +904,8 @@ void SliceUtil::Slicing( Instruction *inst ) {
     }
 
     default:
-        //outs() << "assert : " << inst->getOpcodeName() << "\n";
-        //outs() << "assert : " << _util->inst2str( inst ) << "\n";
+        outs() << "assert : " << inst->getOpcodeName() << "\n";
+        outs() << "assert : " << _util->inst2str( inst ) << "\n";
         assert( false && "Not handled instruction" );
         break;
     }
