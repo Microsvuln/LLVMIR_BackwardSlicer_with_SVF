@@ -19,6 +19,7 @@ int main( int argc, char *argv[] )
     SVF::SVFModule *svfModule = SVF::LLVMModuleSet::getLLVMModuleSet()->buildSVFModule( moduleNameVec );
     svfModule->buildSymbolTableInfo();
 
+    UtilDef *util = new UtilDef;
     BackwardSlice *bw = new BackwardSlice;
 
     vector<Function*> functions;
@@ -31,7 +32,16 @@ int main( int argc, char *argv[] )
         //outs() << pasMsg("Function : " + func->getName() + "\n" );
         Function *llvmFunc = func->getLLVMFun();
         functions.push_back( llvmFunc );
-        //outs() << to_string( i ) << " : " << llvmFunc->getName() << "\n";
+        /*
+        outs() << to_string( i ) << " : " << func->getName() << "\n";
+        const char *demangled = util->Demangle( llvmFunc->getName().str().c_str() );
+        if ( demangled != nullptr ) {
+            outs() << demangled << "\n";
+        }
+        else { 
+            outs() << "NULL" << "\n";
+        }
+        */
         i ++;
     }
     isSliced.resize( functions.size() );

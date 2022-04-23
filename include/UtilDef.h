@@ -22,6 +22,7 @@
 #include <cstdio>
 #include "Util/SVFUtil.h"      // Keep this order
 #include "MemoryModel/PointerAnalysis.h"
+#include <cxxabi.h>
 
 using namespace std;
 using namespace llvm;
@@ -33,6 +34,18 @@ class SVFModule;
 
 class UtilDef{
 public:
+    const char* Demangle(const char *func_name)
+    {
+        int status;
+        const char *ret = abi::__cxa_demangle(func_name, 0, 0, &status);
+
+        if ( status != 0 ) {
+            return nullptr;
+            //return "NULL";
+        }
+        return ret;
+    }
+
     // Instruction related util
     inline const Function *getCallee(const Instruction *inst){
         if(const CallInst *ci = SVFUtil::dyn_cast<CallInst>(inst)){

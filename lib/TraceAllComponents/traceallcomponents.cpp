@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <typeinfo>
 
 using namespace SVF;
 using SVF::SVFUtil::pasMsg;
@@ -60,6 +61,11 @@ void PrintAllComponent( SVF::SVFModule *svfModule )
     for ( auto func : *svfModule ) {
         llvm::Function *llvmFunc = func->getLLVMFun();
         outs() << pasMsg( "Function : " + llvmFunc->getName().str() ) << "\n";
+        const char *demangled = util->Demangle( llvmFunc->getName().str().c_str() );
+        if ( demangled == nullptr ) {
+            demangled = "NULL";
+        }
+        outs() << pasMsg( "Demangled : ") << pasMsg( util->Demangle( demangled ) ) << "\n";
         outs() << pasMsg( "ARG : ");
         for ( auto it = llvmFunc->arg_begin(); it != llvmFunc->arg_end(); it ++ ) {
             outs() << pasMsg( (*it).getName().str() ) << ", ";
@@ -111,6 +117,11 @@ void PrintByFunction( llvm::Function *func )
     UtilDef *util = new UtilDef;
 
     outs() << pasMsg( "Function : " + func->getName().str() ) << "\n";
+    const char *demangled = util->Demangle( func->getName().str().c_str() );
+    if ( demangled == nullptr ) {
+        demangled = "NULL";
+    }
+    outs() << pasMsg( "Demangled : " ) << pasMsg( demangled ) << "\n";
     outs() << pasMsg( "ARG : ");
     for ( auto it = func->arg_begin(); it != func->arg_end(); it ++ ) {
         outs() << pasMsg( (*it).getName().str() ) << ", ";
@@ -208,6 +219,11 @@ void PrintByFunction( llvm::Function *func )
                 */
                 //outs() << "Func type : ";
                 //outs() << calledFunc->getReturnType()
+                const char *demangled = util->Demangle( calledFunc->getName().str().c_str() );
+                if ( demangled == nullptr ) {
+                    demangled = "NULL";
+                }
+                outs() << pasMsg( "Demangled : " ) << pasMsg( demangled ) << "\n";
                 if ( calledFunc->getReturnType()->isVoidTy() ) {
                     outs() << "void function\n";
                 }
