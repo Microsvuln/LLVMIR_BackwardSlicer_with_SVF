@@ -34,10 +34,22 @@ class SVFModule;
 
 class UtilDef{
 public:
-    const char* Demangle(const char *func_name)
+    const char* Demangle( const char *func_name )
     {
         int status;
-        const char *ret = abi::__cxa_demangle(func_name, 0, 0, &status);
+        const char *ret = abi::__cxa_demangle( func_name, 0, 0, &status );
+
+        if ( status != 0 ) {
+            return nullptr;
+            //return "NULL";
+        }
+        return ret;
+    }
+
+    const char* Demangle( const string &func_name )
+    {
+        int status;
+        const char *ret = abi::__cxa_demangle( func_name.c_str(), 0, 0, &status );
 
         if ( status != 0 ) {
             return nullptr;

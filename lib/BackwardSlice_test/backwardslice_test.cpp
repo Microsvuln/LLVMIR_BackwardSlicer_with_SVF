@@ -326,3 +326,123 @@ void BackwardSlice::PrintByValueIdx( Function *func )
     std::cin >> idx;
     _sliced_func_list->at( func )->PrintSliceResult( idx );
 }
+
+void BackwardSlice::uorbtest ( Function *func )
+{
+    bool has = false;
+    
+    for ( auto &bb : *func ) {
+        for ( auto &inst : bb ) {
+
+            CallInst *callinst = dyn_cast_or_null<CallInst>( &inst );
+            if ( callinst != nullptr ) {
+                Value *called_op = callinst->getCalledOperand();
+                Function *called_func = dyn_cast_or_null<Function>( called_op );
+                if ( called_func == nullptr ) {
+                    continue;
+                }
+                string func_name = called_func->getName().str();
+
+                
+                if ( ( func_name.find( "update" ) != string::npos 
+                    || func_name.find( "copy" ) != string::npos )
+                    && func_name.find( "Param" ) == string::npos
+                    && func_name.find( "Block" ) == string::npos/*
+                    && func_name.find( "uORB" ) != string::npos
+                    && func_name.find( "Subscription" ) == string::npos
+                    && func_name.find( "available" ) == string::npos
+                    && func_name.find( "orb_publish" ) == string::npos
+                    && func_name.find( "DeviceNode" ) == string::npos
+                    && func_name.find( "CameraTrigger" ) == string::npos
+                    && func_name.find( "MixingOutput" ) == string::npos
+                    && func_name.find( "systemlib" ) == string::npos */
+                    ) {
+                    if ( has == false ) {
+                        const char *demangled = _util->Demangle( func->getName().str() );
+                        if ( demangled == nullptr ) {
+                            demangled = "NULL";
+                        }
+                        outs() << SVF::SVFUtil::pasMsg( func->getName().str() ) << SVF::SVFUtil::pasMsg( " : " ) << SVF::SVFUtil::pasMsg( demangled ) << "\n";
+                        has = true;
+                    }
+                    const char *demangled = _util->Demangle( func_name );
+                    if ( demangled == nullptr ) {
+                        demangled = "NULL";
+                    }
+                    outs() << "  " << _util->inst2str( &inst ) << "\n" << "  " << demangled << "\n";
+                }
+            }
+        }
+    }
+}
+
+void BackwardSlice::uorbpubtest ( Function *func )
+{
+    bool has = false;
+    
+    for ( auto &bb : *func ) {
+        for ( auto &inst : bb ) {
+            CallInst *callinst = dyn_cast_or_null<CallInst>( &inst );
+            if ( callinst != nullptr ) {
+                Value *called_op = callinst->getCalledOperand();
+                Function *called_func = dyn_cast_or_null<Function>( called_op );
+                if ( called_func == nullptr ) {
+                    continue;
+                }
+                string func_name = called_func->getName().str();
+
+                if ( ( func_name.find( "update" ) != string::npos 
+                    || func_name.find( "publish" ) != string::npos )
+                    && func_name.find( "uORB" ) != string::npos
+                    && func_name.find( "Subscription" ) == string::npos
+                    && func_name.find( "available" ) == string::npos
+                    && func_name.find( "orb_publish" ) == string::npos
+                    && func_name.find( "DeviceNode" ) == string::npos
+                /*  && func_name.find( "Param" ) == string::npos
+                    && func_name.find( "Block" ) == string::npos
+                    && func_name.find( "CameraTrigger" ) == string::npos
+                    && func_name.find( "MixingOutput" ) == string::npos
+                    && func_name.find( "systemlib" ) == string::npos */
+                    ) {
+                    if ( has == false ) {
+                        const char *demangled = _util->Demangle( func->getName().str() );
+                        if ( demangled == nullptr ) {
+                            demangled = "NULL";
+                        }
+                        outs() << SVF::SVFUtil::pasMsg( func->getName().str() ) << SVF::SVFUtil::pasMsg( " : " ) << SVF::SVFUtil::pasMsg( demangled ) << "\n";
+                        has = true;
+                    }
+
+                    const char *demangled = _util->Demangle( func_name );
+                    string demangled_str;
+                    if ( demangled == nullptr ) {
+                        demangled_str = "NULL";
+                    }
+                    else { 
+                        demangled_str = demangled;
+                    }
+
+                    string topic_struct;
+                    bool is_topic_str = false;
+                    for ( auto c : demangled_str ) {
+                        if ( c == ',' || c == '>' ) {
+                            break;
+                        }
+
+                        if ( is_topic_str ) {
+                            topic_struct += c;
+                        }
+                        
+                        if ( c == '<') {
+                            is_topic_str = true;
+                        }
+                    }
+
+                    string topic = topic_struct.substr( 0, topic_struct.size() - 2 );
+                    outs() << "  " << _util->inst2str( &inst ) << "\n" << "  " << demangled << "\n";
+                    outs() << "topic : " << topic << "\n";
+                }
+            }
+        }
+    }
+}

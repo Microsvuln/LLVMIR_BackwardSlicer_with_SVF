@@ -18,10 +18,12 @@ class BackwardSlice {
 private:
     map <Function*, SliceUtil*>*    _sliced_func_list;
     set<string>*                    _ignore_func_list_for_interslice;
+    UtilDef*                        _util;
 public:
     BackwardSlice( void )
         : _sliced_func_list( new map <Function*, SliceUtil*> )
         , _ignore_func_list_for_interslice( new set<string> )
+        , _util( new UtilDef )
     {
         // px4 uorb
         // parameter값을 class 로 typecasting 해서 함수포인터 맴버변수로 함수호출함. 여기서 막혀서 제외시킴.
@@ -51,6 +53,10 @@ public:
 
     // print sliced variable list
     void PrintByValueIdx            ( Function *func );
+
+    // uORB test
+    void uorbtest                   ( Function *func );
+    void uorbpubtest                ( Function *func );
 };
 
 #endif

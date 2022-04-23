@@ -79,6 +79,43 @@ int main( int argc, char *argv[] )
                 outs() << "done\n";
                 break;
             }
+            // Get call pub/sub in function
+            case -4:
+            {
+                outs() << "1. All func, 2. Specific func\n select : ";
+                cin >> idx;
+                if ( idx == 1 ) {
+                    for ( auto f : functions ) {
+                        bw->uorbtest( f );
+                    }
+                }
+                else { 
+                    outs() << "function idx : ";
+                    cin >> idx;
+                    Function *func = functions[idx];
+                    bw->uorbtest( func );
+                }
+                
+                break;
+            }
+            case -5:
+            {
+                outs() << "1. All func, 2. Specific func\n select : ";
+                cin >> idx;
+                if ( idx == 1 ) {
+                    for ( auto f : functions ) {
+                        bw->uorbpubtest( f );
+                    }
+                }
+                else { 
+                    outs() << "function idx : ";
+                    cin >> idx;
+                    Function *func = functions[idx];
+                    bw->uorbpubtest( func );
+                }
+                
+                break;
+            }
             default:
             {
                 Function *func = functions[idx];
